@@ -1,0 +1,20 @@
+IMPORTANT: python 3.9
+
+set exact path to interpreter in cmakelists, for example
+ - set(Python3_EXECUTABLE "/Library/Frameworks/Python.framework/Versions/3.9/bin/python3.9")
+
+install following dependencies there
+- speechrecognition
+- whisper
+- PyAudio
+- certifi
+- soundfile
+
+Put this in python file to solve SSL issue
+- ssl._create_default_https_context = ssl._create_unverified_context
+
+Place python file speechrecog.py in same directory as executable (cmake-build-debug), not source file.
+Alternatively specify absolute path
+
+
+
