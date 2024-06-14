@@ -130,6 +130,7 @@
     As mentioned above, there's a whole little function vocabulary built around
     time triggers, but those are hopefully all self-explanatory.
 */
+#include "sokol/getdirection.h"
 #include "sokol_app.h"
 #include "sokol_audio.h"
 #include "sokol_gfx.h"
@@ -737,6 +738,7 @@ static const uint8_t rom_wavetable[256];
 
 /*== APPLICATION ENTRY AND CALLBACKS =========================================*/
 sapp_desc sokol_main(int argc, char *argv[]) {
+    getDirection();
   (void)argc;
   (void)argv;
   return (sapp_desc){
