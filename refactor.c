@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 
-#define MAP_DIM 32
+#define MAP_DIM 8
 
 typedef enum{
     BLANK,
@@ -268,9 +268,11 @@ void changePlayerDir(player *player1){
     }
 }
 
-tile **genMap(void ){
+tile **genMap(tile **map ){
 
 //    TODO: IMPLEMENT MAP GENERATION
+
+
 }
 
 player *initPlayer(tile **map){
@@ -299,7 +301,20 @@ gamestate *initGame(){
 
 int main(int argc, char** argv){
     while (1){
-        tile **map = genMap();
+//        tile **map;
+//        genMap(map);
+        tile map[MAP_DIM][MAP_DIM] = {
+                {WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL},
+                {BLANK, BLANK, BLANK, BLANK, WALL, BLANK, BLANK, BLANK},
+                {BLANK, BLANK, BLANK, BLANK, WALL, BLANK, BLANK, BLANK},
+                {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+                {BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+                {BLANK, WALL, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+                {BLANK, WALL, BLANK, BLANK, BLANK, BLANK, BLANK, BLANK},
+                {WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL},
+
+        };
+
         player *player1 = initPlayer(map);
         hunter *hunter1 = initHunter(map, player1);
         gamestate *game = initGame();
