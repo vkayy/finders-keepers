@@ -54,9 +54,95 @@ typedef struct{
 //tile map[MAP_DIM][MAP_DIM];
 //gamestate game = {};
 
+coord topleftblank(tile **map){
+    coord ans;
+    for (int i = 0; i < MAP_DIM; i++){
+        for (int j = 0; j < MAP_DIM; j++) {
+            if (map[i][j] == BLANK){
+                ans.x = i;
+                ans.y = j;
+                return ans;
+            }
+        }
+    }
+    assert(false);
+}
+
+coord toprighttblank(tile **map){
+    coord ans;
+    for (int i = 0; i < MAP_DIM; i++){
+        for (int j = MAP_DIM; j >= 0; j--) {
+            if (map[i][j] == BLANK){
+                ans.x = i;
+                ans.y = j;
+                return ans;
+            }
+        }
+    }
+    assert(false);
+}
+
+coord botleftblank(tile **map){
+    coord ans;
+    for (int i = MAP_DIM; i >= 0; i--){
+        for (int j = 0; j < MAP_DIM; j++) {
+            if (map[i][j] == BLANK){
+                ans.x = i;
+                ans.y = j;
+                return ans;
+            }
+        }
+    }
+    assert(false);
+}
+
+coord botrightblank(tile **map){
+    coord ans;
+    for (int i = MAP_DIM; i >= 0; i--){
+        for (int j = MAP_DIM; j >= 0; j--) {
+            if (map[i][j] == BLANK){
+                ans.x = i;
+                ans.y = j;
+                return ans;
+            }
+        }
+    }
+    assert(false);
+}
+
 static bool checkVictory(gamestate *game){
     return game->pts == 4;
 }
+void setTreasure(tile **map,gamestate *game){
+    coord tl = topleftblank(map);
+    coord tr = toprighttblank(map);
+    coord bl = botleftblank(map);
+    coord br = botrightblank(map);
+    static bool used[4];
+    int r;
+
+    if (game->pts == 0){
+        r = rand() % 1;
+        (r == 0)? (map[tl.x][tl.y] = TREASURE): (map[br.x][br.y] = TREASURE);
+        used[r] = true;
+        return;
+    }
+
+    do {
+        r = rand() % 3;
+    } while (used[r]);
+
+    switch (r) {
+        case 0: (map[tl.x][tl.y] = TREASURE); break;
+        case 1: (map[tr.x][tr.y] = TREASURE); break;
+        case 2: (map[bl.x][bl.y] = TREASURE); break;
+        case 3: (map[br.x][br.y] = TREASURE); break;
+    }
+
+    used[r] = true;
+
+}
+
 
 static bool canMove(tile **map, int x, int y , dir direction){
     switch (direction) {
@@ -82,6 +168,7 @@ static void movePlayer(tile** map, player *player1, gamestate *game){
     }
     if ( map[player1->pos.x][player1->pos.y] == TREASURE) {
         game->pts++;
+        if(!checkVictory(game)) setTreasure(map, game);
     }
 
     map[player1->pos.x][player1->pos.y] = PLAYER;
@@ -164,61 +251,6 @@ void routing_table(tile **map){
 
 }
 
-coord topleftblank(tile **map){
-    coord ans;
-    for (int i = 0; i < MAP_DIM; i++){
-        for (int j = 0; j < MAP_DIM; j++) {
-            if (map[i][j] == BLANK){
-                ans.x = i;
-                ans.y = j;
-                return ans;
-            }
-        }
-    }
-    assert(false);
-}
-
-coord toprighttblank(tile **map){
-    coord ans;
-    for (int i = 0; i < MAP_DIM; i++){
-        for (int j = MAP_DIM; j >= 0; j--) {
-            if (map[i][j] == BLANK){
-                ans.x = i;
-                ans.y = j;
-                return ans;
-            }
-        }
-    }
-    assert(false);
-}
-
-coord botleftblank(tile **map){
-    coord ans;
-    for (int i = MAP_DIM; i >= 0; i--){
-        for (int j = 0; j < MAP_DIM; j++) {
-            if (map[i][j] == BLANK){
-                ans.x = i;
-                ans.y = j;
-                return ans;
-            }
-        }
-    }
-    assert(false);
-}
-
-coord botrightblank(tile **map){
-    coord ans;
-    for (int i = MAP_DIM; i >= 0; i--){
-        for (int j = MAP_DIM; j >= 0; j--) {
-            if (map[i][j] == BLANK){
-                ans.x = i;
-                ans.y = j;
-                return ans;
-            }
-        }
-    }
-    assert(false);
-}
 
 void changeHunterDir(hunter *hunter1, player *player1) {
     hunter1->direction = next[hunter1->pos.x][hunter1->pos.y][player1->pos.x][player1->pos.y];
@@ -263,35 +295,6 @@ gamestate *initGame(){
     ans->lost = false;
 }
 
-void setTreasure(tile **map,gamestate *game){
-    coord tl = topleftblank(map);
-    coord tr = toprighttblank(map);
-    coord bl = botleftblank(map);
-    coord br = botrightblank(map);
-    static bool used[4];
-    int r;
-
-    if (game->pts == 0){
-        r = rand() % 1;
-        (r == 0)? (map[tl.x][tl.y] = TREASURE): (map[br.x][br.y] = TREASURE);
-        used[r] = true;
-        return;
-    }
-
-    do {
-        r = rand() % 3;
-    } while (used[r]);
-
-    switch (r) {
-        case 0: (map[tl.x][tl.y] = TREASURE); break;
-        case 1: (map[tr.x][tr.y] = TREASURE); break;
-        case 2: (map[bl.x][bl.y] = TREASURE); break;
-        case 3: (map[br.x][br.y] = TREASURE); break;
-    }
-
-    used[r] = true;
-
-}
 
 
 int main(int argc, char** argv){
