@@ -140,6 +140,7 @@
 #include <stdlib.h> // abs()
 #include <string.h> // memset()
 
+#define MAP_DIM 32
 // config defines and global constants
 #define AUDIO_VOLUME (0.5f)
 #define DBG_SKIP_INTRO (0)   // set to (1) to skip intro
@@ -330,6 +331,18 @@ typedef enum {
   FREEZETYPE_DEAD = (1 << 3),      // Pacman was eaten by a ghost
   FREEZETYPE_WON = (1 << 4),       // game round was won by eating all dots
 } FreezeType;
+
+// Types of tiles
+typedef enum{
+    BLANK,
+    WALL,
+    TREASURE,
+    PLAYER,
+    HUNTER
+} tile;
+
+//Initialize map 2D array here
+tile map[MAP_DIM][MAP_DIM] = {};
 
 // a trigger holds a specific game-tick when an action should be started
 typedef struct {

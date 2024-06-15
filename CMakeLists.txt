@@ -62,7 +62,8 @@ target_include_directories(sokol INTERFACE sokol)
 if(CMAKE_SYSTEM_NAME STREQUAL Windows)
   add_executable(pacman WIN32 pacman.c)
 else()
-  add_executable(pacman pacman.c)
+  add_executable(pacman pacman.c
+          refactor.c)
 endif()
 
 # Link libraries
