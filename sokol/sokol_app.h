@@ -401,7 +401,7 @@
     ================================================
     In normal mouse mode, no mouse movement events are reported when the
     mouse leaves the windows client area or hits the screen border (whether
-    it's one or the other depends on the platform), and the mouse move events
+    it's one or the other depends on the platform), and the mouse movePlayer events
     (SAPP_EVENTTYPE_MOUSE_MOVE) contain absolute mouse positions in
     framebuffer pixels in the sapp_event items mouse_x and mouse_y, and
     relative movement in framebuffer pixels in the sapp_event items mouse_dx
@@ -7547,7 +7547,7 @@ _SOKOL_PRIVATE LRESULT CALLBACK _sapp_win32_wndproc(HWND hWnd, UINT uMsg, WPARAM
                 */
                 break;
             case WM_NCLBUTTONDOWN:
-                /* workaround for half-second pause when starting to move window
+                /* workaround for half-second pause when starting to movePlayer window
                     see: https://gamedev.net/forums/topic/672094-keeping-things-moving-during-win32-moveresize-events/5254386/
                 */
                 if (SendMessage(_sapp.win32.hwnd, WM_NCHITTEST, wParam, lParam) == HTCAPTION) {

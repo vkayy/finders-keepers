@@ -8,6 +8,7 @@
 #include <string.h> // memset()
 #include <stdbool.h>
 #include <limits.h>
+#include <stdio.h>
 
 
 #define MAP_DIM 32
@@ -30,63 +31,89 @@ typedef enum{
 typedef struct{
     int x;
     int y;
+} coord;
+
+
+typedef struct{
+    coord pos;
     dir direction;
 } player;
 
 typedef struct{
-    int x;
-    int y;
+    coord pos;
     dir direction;
 } hunter;
 
 typedef struct{
     int pts;
+    bool won;
+    bool lost;
 } gamestate;
 
-tile map[MAP_DIM][MAP_DIM] = {};
-gamestate game = {};
 
-static bool checkVictory(void ){
-    return game.pts == 4;
+//tile map[MAP_DIM][MAP_DIM];
+//gamestate game = {};
+
+static bool checkVictory(gamestate *game){
+    return game->pts == 4;
 }
 
-static bool canMove(player *player1){
+static bool canMove(tile **map, int x, int y , dir direction){
+    switch (direction) {
+        case LEFT: return !(y <= 0 || map[x][y - 1] == WALL);
+        case UP: return !(x <= 0 || map[x-1][y] == WALL);
+        case RIGHT: return !(y >= MAP_DIM-1 || map[x][y+1] == WALL);
+        case DOWN: return !(x >= MAP_DIM-1 || map[x+1][y] == WALL);
+    }
+}
+
+static void movePlayer(tile** map, player *player1, gamestate *game){
+    if (!canMove(map, player1->pos.x, player1->pos.y, player1->direction)) return;
+    map[player1->pos.x][player1->pos.y] = BLANK;
     switch (player1->direction) {
-        case LEFT: return !(player1->y <= 0 || map[player1->x][player1->y - 1] == WALL);
-        case UP: return !(player1->x <= 0 || map[player1->x-1][player1->y] == WALL);
-        case RIGHT: return !(player1->y >= MAP_DIM-1 || map[player1->x][player1->y+1] == WALL);
-        case DOWN: return !(player1->x >= MAP_DIM-1 || map[player1->x+1][player1->y] == WALL);
-    }
-}
-
-static void move(player *player1){
-    if (!canMove(player1)) return;
-    map[player1->x][player1->y] = BLANK;
-    switch (player1->direction) {
-        case LEFT: player1->y --;
+        case LEFT: player1->pos.y --;
             break;
-        case UP: player1->x --;
+        case UP: player1->pos.x --;
             break;
-        case RIGHT: player1->y ++;
+        case RIGHT: player1->pos.y ++;
             break;
-        case DOWN: player1->x ++;
+        case DOWN: player1->pos.x ++;
             break;
     }
-    if ( map[player1->x][player1->y] == TREASURE) {
-        game.pts++;
+    if ( map[player1->pos.x][player1->pos.y] == TREASURE) {
+        game->pts++;
     }
 
-    map[player1->x][player1->y] = PLAYER;
+    map[player1->pos.x][player1->pos.y] = PLAYER;
 }
+
+static void moveHunter(tile** map, hunter *hunter1){
+    if (!canMove(map, hunter1->pos.x, hunter1->pos.y, hunter1->direction)) return;
+    if (map[hunter1->pos.x][hunter1->pos.y] != TREASURE) map[hunter1->pos.x][hunter1->pos.y] = BLANK;
+    switch (hunter1->direction) {
+        case LEFT: hunter1->pos.y --;
+            break;
+        case UP: hunter1->pos.x --;
+            break;
+        case RIGHT: hunter1->pos.y ++;
+            break;
+        case DOWN: hunter1->pos.x ++;
+            break;
+    }
+
+    if (map[hunter1->pos.x][hunter1->pos.y] != TREASURE) map[hunter1->pos.x][hunter1->pos.y] = HUNTER;
+
+}
+
 
 static bool checkLost(player *player1, hunter *hunter1){
-    return (player1->x == hunter1->x && player1->y == hunter1->y);
+    return (player1->pos.x == hunter1->pos.x && player1->pos.y == hunter1->pos.y);
 }
 
 int len[MAP_DIM][MAP_DIM][MAP_DIM][MAP_DIM];
 dir next[MAP_DIM][MAP_DIM][MAP_DIM][MAP_DIM];
 
-void routing_table(int **map){
+void routing_table(tile **map){
 
     for (int i = 0; i < MAP_DIM; i++){
         for (int j = 0; j < MAP_DIM; j++){
@@ -137,15 +164,157 @@ void routing_table(int **map){
 
 }
 
+coord topleftblank(tile **map){
+    coord ans;
+    for (int i = 0; i < MAP_DIM; i++){
+        for (int j = 0; j < MAP_DIM; j++) {
+            if (map[i][j] == BLANK){
+                ans.x = i;
+                ans.y = j;
+                return ans;
+            }
+        }
+    }
+    assert(false);
+}
+
+coord toprighttblank(tile **map){
+    coord ans;
+    for (int i = 0; i < MAP_DIM; i++){
+        for (int j = MAP_DIM; j >= 0; j--) {
+            if (map[i][j] == BLANK){
+                ans.x = i;
+                ans.y = j;
+                return ans;
+            }
+        }
+    }
+    assert(false);
+}
+
+coord botleftblank(tile **map){
+    coord ans;
+    for (int i = MAP_DIM; i >= 0; i--){
+        for (int j = 0; j < MAP_DIM; j++) {
+            if (map[i][j] == BLANK){
+                ans.x = i;
+                ans.y = j;
+                return ans;
+            }
+        }
+    }
+    assert(false);
+}
+
+coord botrightblank(tile **map){
+    coord ans;
+    for (int i = MAP_DIM; i >= 0; i--){
+        for (int j = MAP_DIM; j >= 0; j--) {
+            if (map[i][j] == BLANK){
+                ans.x = i;
+                ans.y = j;
+                return ans;
+            }
+        }
+    }
+    assert(false);
+}
+
 void changeHunterDir(hunter *hunter1, player *player1) {
-    hunter1->direction = next[hunter1->x][hunter1->y][player1->x][player1->y];
+    hunter1->direction = next[hunter1->pos.x][hunter1->pos.y][player1->pos.x][player1->pos.y];
 }
 
 void changePlayerDir(player *player1){
-//    to modify getDirection to return intended values
-    dir direction = getDirection();
-    player1->direction = direction;
+    int direction = getDirection();
+    switch (direction) {
+        case 1: player1->direction = RIGHT; break;
+        case 2: player1->direction = UP; break;
+        case 3: player1->direction = LEFT; break;
+        case 4: player1->direction = DOWN; break;
+        default:
+            return;
+    }
+}
+
+tile **genMap(void ){
+
+//    TODO: IMPLEMENT MAP GENERATION
+}
+
+player *initPlayer(tile **map){
+    player *ans = malloc(sizeof(player));
+    ans->pos = botleftblank(map);
+    ans->direction = RIGHT;
+    return ans;
+
+}
+
+hunter *initHunter(tile **map, player *player1){
+    hunter *ans = malloc(sizeof(hunter));
+    ans->pos = toprighttblank(map);
+    ans->direction = LEFT;
+    return ans;
+}
+
+gamestate *initGame(){
+    gamestate *ans = malloc(sizeof(hunter));
+    ans->pts = 0;
+    ans->won = false;
+    ans->lost = false;
+}
+
+void setTreasure(tile **map,gamestate *game){
+    coord tl = topleftblank(map);
+    coord tr = toprighttblank(map);
+    coord bl = botleftblank(map);
+    coord br = botrightblank(map);
+    static bool used[4];
+    int r;
+
+    if (game->pts == 0){
+        r = rand() % 1;
+        (r == 0)? (map[tl.x][tl.y] = TREASURE): (map[br.x][br.y] = TREASURE);
+        used[r] = true;
+        return;
+    }
+
+    do {
+        r = rand() % 3;
+    } while (used[r]);
+
+    switch (r) {
+        case 0: (map[tl.x][tl.y] = TREASURE); break;
+        case 1: (map[tr.x][tr.y] = TREASURE); break;
+        case 2: (map[bl.x][bl.y] = TREASURE); break;
+        case 3: (map[br.x][br.y] = TREASURE); break;
+    }
+
+    used[r] = true;
+
 }
 
 
+int main(int argc, char** argv){
+    while (1){
+        tile **map = genMap();
+        player *player1 = initPlayer(map);
+        hunter *hunter1 = initHunter(map, player1);
+        gamestate *game = initGame();
+        setTreasure(map, game);
+        routing_table(map);
+        while (!game->won && !game->lost){
+            changePlayerDir(player1);
+            changeHunterDir(hunter1, player1);
+            movePlayer(map, player1, game);
+            moveHunter(map, hunter1);
+            game->won = checkVictory(game);
+            game->lost = checkLost(player1, hunter1);
+        }
+        if (game->won) printf("You won!");
+        printf("You lost!");
+        free(player1);
+        free(hunter1);
+        free(game);
+    }
+}
 

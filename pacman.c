@@ -1327,7 +1327,7 @@ static bool can_move(Vector2 pos, Dir wanted_dir, bool allow_cornering) {
   const Vector2 dir_vec = Diro_vec(wanted_dir);
   const Vector2 dist_mid = dist_to_tile_mid(pos);
 
-  // distance to midpoint in move direction and perpendicular direction
+  // distance to midpoint in movePlayer direction and perpendicular direction
   int16_t move_dist_mid, perp_dist_mid;
   if (dir_vec.y != 0) {
     move_dist_mid = dist_mid.y;
@@ -1746,7 +1746,7 @@ static void game_update_sprites(void) {
           // show the regular ghost sprite image, the ghost's
           // 'next_dir' is used to visualize the direction the ghost
           // is heading to, this has the effect that ghosts already look
-          // into the direction they will move into one tile ahead
+          // into the direction they will movePlayer into one tile ahead
           spr_anim_ghost(i, ghost->next_dir, ghost->actor.anim_tick);
           break;
         }
@@ -1755,7 +1755,7 @@ static void game_update_sprites(void) {
 
   // hide or display the currently active bonus fruit
 }
-// return true if Pacman should move in this tick, when eating dots, Pacman
+// return true if Pacman should movePlayer in this tick, when eating dots, Pacman
 // is slightly slower than ghosts, otherwise slightly faster
 static bool game_pacman_should_move(void) {
   if (now(state.game.dot_eaten)) {
@@ -1769,8 +1769,8 @@ static bool game_pacman_should_move(void) {
   }
 }
 
-// return number of pixels a ghost should move this tick, this can't be a simple
-// move/don't move boolean return value, because ghosts in eye state move faster
+// return number of pixels a ghost should movePlayer this tick, this can't be a simple
+// move/don't move boolean return value, because ghosts in eye state movePlayer faster
 // than one pixel per tick
 static int game_ghost_speed(const Ghost *ghost) {
   assert(ghost);
@@ -1780,7 +1780,7 @@ static int game_ghost_speed(const Ghost *ghost) {
     // inside house at half speed (estimated)
     return state.timing.tick & 1;
   case GHOSTSTATE_FRIGHTENED:
-    // move at 50% speed when frightened
+    // movePlayer at 50% speed when frightened
     return state.timing.tick & 1;
   case GHOSTSTATE_EYES:
   case GHOSTSTATE_ENTERHOUSE:
@@ -1788,10 +1788,10 @@ static int game_ghost_speed(const Ghost *ghost) {
     return (state.timing.tick & 1) ? 1 : 2;
   default:
     if (is_tunnel(pixel_to_tile_pos(ghost->actor.pos))) {
-      // move drastically slower when inside tunnel
+      // movePlayer drastically slower when inside tunnel
       return ((state.timing.tick * 2) % 4) ? 1 : 0;
     } else {
-      // otherwise move just a bit slower than Pacman
+      // otherwise movePlayer just a bit slower than Pacman
       return (state.timing.tick % 7) ? 1 : 0;
     }
   }
@@ -1828,7 +1828,7 @@ static void game_update_ghost_state(Ghost *ghost) {
   case GHOSTSTATE_EYES:
     // When in eye state (heading back to the ghost house), check if the
     // target position in front of the ghost house has been reached, then
-    // switch into ENTERHOUSE state. Since ghosts in eye state move faster
+    // switch into ENTERHOUSE state. Since ghosts in eye state movePlayer faster
     // than one pixel per tick, do a fuzzy comparison with the target pos
     if (nearequal_i2(ghost->actor.pos, i2(ANTEPORTAS_X, ANTEPORTAS_Y), 1)) {
       new_state = GHOSTSTATE_ENTERHOUSE;
@@ -1973,11 +1973,11 @@ static void game_update_Ghostarget(Ghost *ghost) {
   case GHOSTSTATE_FRIGHTENED:
     // in frightened state just select a random target position
     // this has the effect that ghosts in frightened state
-    // move in a random direction at each intersection
+    // movePlayer in a random direction at each intersection
     pos = i2(xorshift32() % DISPLAY_TILES_X, xorshift32() % DISPLAY_TILES_Y);
     break;
   case GHOSTSTATE_EYES:
-    // move towards the ghost house door
+    // movePlayer towards the ghost house door
     pos = i2(13, 14);
     break;
   default:
@@ -1991,7 +1991,7 @@ static void game_update_Ghostarget(Ghost *ghost) {
 // tiles (this special case is used for movement inside the ghost house)
 static bool game_update_ghost_dir(Ghost *ghost) {
   assert(ghost);
-  // inside ghost-house, just move up and down
+  // inside ghost-house, just movePlayer up and down
   if (ghost->state == GHOSTSTATE_HOUSE) {
     if (ghost->actor.pos.y <= 17 * TILE_HEIGHT) {
       ghost->next_dir = DIR_DOWN;
@@ -2141,7 +2141,7 @@ static void game_update_dots_eaten(void) {
 static void game_update_actors(void) {
   // Pacman "AI"
   if (game_pacman_should_move()) {
-    // move Pacman with cornering allowed
+    // movePlayer Pacman with cornering allowed
     Actor *actor = &state.game.pacman.actor;
     const Dir wanted_dir = input_dir(actor->dir);
     const bool allow_cornering = true;
@@ -2149,7 +2149,7 @@ static void game_update_actors(void) {
     if (can_move(actor->pos, wanted_dir, allow_cornering)) {
       actor->dir = wanted_dir;
     }
-    // move into the selected direction
+    // movePlayer into the selected direction
     if (can_move(actor->pos, actor->dir, allow_cornering)) {
       actor->pos = move(actor->pos, actor->dir, allow_cornering);
       actor->anim_tick++;
@@ -2219,7 +2219,7 @@ static void game_update_actors(void) {
     game_update_ghost_state(ghost);
     // update the ghost's target position
     game_update_Ghostarget(ghost);
-    // finally, move the ghost towards the current target position
+    // finally, movePlayer the ghost towards the current target position
     const int num_move_ticks = game_ghost_speed(ghost);
     for (int i = 0; i < num_move_ticks; i++) {
       bool force_move = game_update_ghost_dir(ghost);

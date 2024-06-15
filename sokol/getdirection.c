@@ -57,7 +57,10 @@ int getDirection(void) {
         //                Py_DECREF(pArgs);
 
         if (pValue != NULL) {
-          printf("Result of call: %ld\n", PyLong_AsLong(pValue));
+            int res = PyLong_AsLong(pValue);
+
+          printf("Result of call: %d\n", res);
+            return res;
           Py_DECREF(pValue);
         } else {
           Py_DECREF(pFunc);
