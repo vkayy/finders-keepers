@@ -1,6 +1,3 @@
-//
-// Created by Goh Kai Jet on 14/06/2024.
-//
 #include "getdirection.h"
 #include <Python.h>
 
@@ -57,10 +54,10 @@ int getDirection(void) {
         //                Py_DECREF(pArgs);
 
         if (pValue != NULL) {
-            int res = PyLong_AsLong(pValue);
+          int res = PyLong_AsLong(pValue);
 
           printf("Result of call: %d\n", res);
-            return res;
+          return res;
           Py_DECREF(pValue);
         } else {
           Py_DECREF(pFunc);

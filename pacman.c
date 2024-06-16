@@ -333,15 +333,9 @@ typedef enum {
 } FreezeType;
 
 // Types of tiles
-typedef enum{
-    BLANK,
-    WALL,
-    TREASURE,
-    PLAYER,
-    HUNTER
-} tile;
+typedef enum { BLANK, WALL, TREASURE, PLAYER, HUNTER } tile;
 
-//Initialize map 2D array here
+// Initialize map 2D array here
 tile map[MAP_DIM][MAP_DIM] = {};
 
 // a trigger holds a specific game-tick when an action should be started
@@ -751,7 +745,7 @@ static const uint8_t rom_wavetable[256];
 
 /*== APPLICATION ENTRY AND CALLBACKS =========================================*/
 sapp_desc sokol_main(int argc, char *argv[]) {
-    getDirection();
+  getDirection();
   (void)argc;
   (void)argv;
   return (sapp_desc){
@@ -1755,8 +1749,8 @@ static void game_update_sprites(void) {
 
   // hide or display the currently active bonus fruit
 }
-// return true if Pacman should movePlayer in this tick, when eating dots, Pacman
-// is slightly slower than ghosts, otherwise slightly faster
+// return true if Pacman should movePlayer in this tick, when eating dots,
+// Pacman is slightly slower than ghosts, otherwise slightly faster
 static bool game_pacman_should_move(void) {
   if (now(state.game.dot_eaten)) {
     // eating a dot causes Pacman to stop for 1 tick
@@ -1769,9 +1763,9 @@ static bool game_pacman_should_move(void) {
   }
 }
 
-// return number of pixels a ghost should movePlayer this tick, this can't be a simple
-// move/don't move boolean return value, because ghosts in eye state movePlayer faster
-// than one pixel per tick
+// return number of pixels a ghost should movePlayer this tick, this can't be a
+// simple move/don't move boolean return value, because ghosts in eye state
+// movePlayer faster than one pixel per tick
 static int game_ghost_speed(const Ghost *ghost) {
   assert(ghost);
   switch (ghost->state) {
