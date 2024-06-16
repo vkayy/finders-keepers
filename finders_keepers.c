@@ -14,8 +14,8 @@ typedef enum { BLANK, WALL, TREASURE, PLAYER, HUNTER } Tile;
 typedef enum { RIGHT, UP, LEFT, DOWN, UNKNOWN } Dir;
 
 typedef struct {
-  int x;
-  int y;
+  int row;
+  int col;
 } Coord;
 
 typedef struct {
@@ -39,8 +39,8 @@ static Coord top_left_blank(Tile map[][MAP_DIM]) {
   for (int i = 1; i < MAP_DIM; i++) {
     for (int j = 1; j < MAP_DIM; j++) {
       if (map[i][j] == BLANK) {
-        ans.x = i;
-        ans.y = j;
+        ans.row = i;
+        ans.col = j;
         return ans;
       }
     }
@@ -53,8 +53,8 @@ static Coord top_right_blank(Tile map[][MAP_DIM]) {
   for (int i = 1; i < MAP_DIM; i++) {
     for (int j = MAP_DIM - 1; j >= 1; j--) {
       if (map[i][j] == BLANK) {
-        ans.x = i;
-        ans.y = j;
+        ans.row = i;
+        ans.col = j;
         return ans;
       }
     }
@@ -67,8 +67,8 @@ static Coord bot_left_blank(Tile map[][MAP_DIM]) {
   for (int i = MAP_DIM - 1; i >= 1; i--) {
     for (int j = 1; j < MAP_DIM; j++) {
       if (map[i][j] == BLANK) {
-        ans.x = i;
-        ans.y = j;
+        ans.row = i;
+        ans.col = j;
         return ans;
       }
     }
@@ -81,8 +81,8 @@ static Coord bot_right_blank(Tile map[][MAP_DIM]) {
   for (int i = MAP_DIM - 1; i >= 1; i--) {
     for (int j = MAP_DIM - 1; j >= 1; j--) {
       if (map[i][j] == BLANK) {
-        ans.x = i;
-        ans.y = j;
+        ans.row = i;
+        ans.col = j;
         return ans;
       }
     }
@@ -102,7 +102,8 @@ static void set_treasure(Tile map[][MAP_DIM], GameState *game) {
 
   if (game->pts == 0) {
     r = rand() % 1;
-    (r == 0) ? (map[tl.x][tl.y] = TREASURE) : (map[br.x][br.y] = TREASURE);
+    (r == 0) ? (map[tl.row][tl.col] = TREASURE)
+             : (map[br.row][br.col] = TREASURE);
     used[r] = true;
     return;
   }
@@ -113,16 +114,16 @@ static void set_treasure(Tile map[][MAP_DIM], GameState *game) {
 
   switch (r) {
   case 0:
-    (map[tl.x][tl.y] = TREASURE);
+    (map[tl.row][tl.col] = TREASURE);
     break;
   case 1:
-    (map[tr.x][tr.y] = TREASURE);
+    (map[tr.row][tr.col] = TREASURE);
     break;
   case 2:
-    (map[bl.x][bl.y] = TREASURE);
+    (map[bl.row][bl.col] = TREASURE);
     break;
   case 3:
-    (map[br.x][br.y] = TREASURE);
+    (map[br.row][br.col] = TREASURE);
     break;
   }
 
@@ -145,62 +146,63 @@ static bool can_move(Tile map[][MAP_DIM], int x, int y, Dir direction) {
 }
 
 static void move_player(Tile map[][MAP_DIM], Player *player, GameState *game) {
-  if (!can_move(map, player->pos.x, player->pos.y, player->direction))
+  if (!can_move(map, player->pos.row, player->pos.col, player->direction))
     return;
-  map[player->pos.x][player->pos.y] = BLANK;
+  map[player->pos.row][player->pos.col] = BLANK;
   switch (player->direction) {
-  case LEFT:
-    player->pos.y--;
+  case RIGHT:
+    player->pos.col++;
     break;
   case UP:
-    player->pos.x--;
+    player->pos.row--;
     break;
-  case RIGHT:
-    player->pos.y++;
+  case LEFT:
+    player->pos.col--;
     break;
   case DOWN:
-    player->pos.x++;
+    player->pos.row++;
     break;
   case UNKNOWN:
     break;
   }
-  if (map[player->pos.x][player->pos.y] == TREASURE) {
+  if (map[player->pos.row][player->pos.col] == TREASURE) {
     game->pts++;
     if (!check_victory(game))
       set_treasure(map, game);
   }
 
-  map[player->pos.x][player->pos.y] = PLAYER;
+  map[player->pos.row][player->pos.col] = PLAYER;
 }
 
 static void move_hunter(Tile map[][MAP_DIM], Hunter *hunter) {
-  if (!can_move(map, hunter->pos.x, hunter->pos.y, hunter->direction))
+  if (!can_move(map, hunter->pos.row, hunter->pos.col, hunter->direction))
     return;
-  if (map[hunter->pos.x][hunter->pos.y] != TREASURE)
-    map[hunter->pos.x][hunter->pos.y] = BLANK;
+  if (map[hunter->pos.row][hunter->pos.col] != TREASURE)
+    map[hunter->pos.row][hunter->pos.col] = BLANK;
   switch (hunter->direction) {
-  case LEFT:
-    hunter->pos.y--;
+  case RIGHT:
+    hunter->pos.col++;
     break;
   case UP:
-    hunter->pos.x--;
+    hunter->pos.row--;
     break;
-  case RIGHT:
-    hunter->pos.y++;
+  case LEFT:
+    hunter->pos.col--;
     break;
   case DOWN:
-    hunter->pos.x++;
+    hunter->pos.row++;
     break;
   case UNKNOWN:
     break;
   }
 
-  if (map[hunter->pos.x][hunter->pos.y] != TREASURE)
-    map[hunter->pos.x][hunter->pos.y] = HUNTER;
+  if (map[hunter->pos.row][hunter->pos.col] != TREASURE)
+    map[hunter->pos.row][hunter->pos.col] = HUNTER;
 }
 
 static bool check_lost(Player *player, Hunter *hunter) {
-  return (player->pos.x == hunter->pos.x && player->pos.y == hunter->pos.y);
+  return (player->pos.row == hunter->pos.row &&
+          player->pos.col == hunter->pos.col);
 }
 
 int len[MAP_DIM][MAP_DIM][MAP_DIM][MAP_DIM];
@@ -243,10 +245,19 @@ static void routing_table(Tile map[][MAP_DIM]) {
 
   for (int p = 0; p < MAP_DIM; ++p) {
     for (int q = 0; q < MAP_DIM; ++q) {
+      if (map[p][q] == WALL) {
+        continue;
+      }
       for (int i = 0; i < MAP_DIM; i++) {
         for (int j = 0; j < MAP_DIM; j++) {
+          if (map[i][j] == WALL) {
+            continue;
+          }
           for (int x = 0; x < MAP_DIM; ++x) {
             for (int y = 0; y < MAP_DIM; ++y) {
+              if (map[x][y] == WALL) {
+                continue;
+              }
               if (len[i][j][p][q] + len[p][q][x][y] < len[i][j][x][y]) {
                 len[i][j][x][y] = len[i][j][p][q] + len[p][q][x][y];
                 next[i][j][x][y] = next[i][j][p][q];
@@ -297,16 +308,16 @@ static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
 }
 
 static bool valid_move(Coord *c, Dir direction) {
-  int x = c->x, y = c->y;
+  int row = c->row, col = c->col;
   switch (direction) {
   case RIGHT:
-    return x + 2 <= MAP_DIM - 2;
+    return col + 2 <= MAP_DIM - 2;
   case UP:
-    return y >= 3;
+    return row >= 3;
   case LEFT:
-    return x >= 3;
+    return col >= 3;
   case DOWN:
-    return y + 2 <= MAP_DIM - 2;
+    return row + 2 <= MAP_DIM - 2;
   default:
     return false;
   }
@@ -323,7 +334,7 @@ static void gen_map(Tile map[][MAP_DIM]) {
 
   Coord current = {rand() % (MAP_DIM) / 2 * 2 + 1,
                    rand() % (MAP_DIM) / 2 * 2 + 1};
-  map[current.x][current.y] = BLANK;
+  map[current.row][current.col] = BLANK;
 
   int total_cells = (MAP_DIM / 2) * (MAP_DIM / 2);
   total_cells--;
@@ -334,25 +345,25 @@ static void gen_map(Tile map[][MAP_DIM]) {
 
     switch (direction) {
     case RIGHT:
-      next.x += 2;
+      next.col += 2;
       break;
     case UP:
-      next.y -= 2;
+      next.row -= 2;
       break;
     case LEFT:
-      next.x -= 2;
+      next.col -= 2;
       break;
     case DOWN:
-      next.y += 2;
+      next.row += 2;
       break;
     default:
       break;
     }
 
     if (valid_move(&current, direction)) {
-      if (map[next.x][next.y] == WALL) {
-        map[(current.x + next.x) / 2][(current.y + next.y) / 2] = BLANK;
-        map[next.x][next.y] = BLANK;
+      if (map[next.row][next.col] == WALL) {
+        map[(current.row + next.row) / 2][(current.col + next.col) / 2] = BLANK;
+        map[next.row][next.col] = BLANK;
         total_cells--;
 
         system("clear");
@@ -369,7 +380,7 @@ static Player *init_player(Tile map[][MAP_DIM]) {
   Player *player = malloc(sizeof(Player));
   player->pos = bot_left_blank(map);
   player->direction = RIGHT;
-  map[player->pos.x][player->pos.y] = PLAYER;
+  map[player->pos.row][player->pos.col] = PLAYER;
   return player;
 }
 
@@ -377,13 +388,14 @@ static Hunter *init_hunter(Tile map[][MAP_DIM]) {
   Hunter *hunter = malloc(sizeof(Hunter));
   hunter->pos = top_right_blank(map);
   hunter->direction = LEFT;
-  map[hunter->pos.x][hunter->pos.y] = HUNTER;
+  map[hunter->pos.row][hunter->pos.col] = HUNTER;
   return hunter;
 }
 
 static void change_hunter_dir(Hunter *hunter, Player *player) {
   hunter->direction =
-      next[hunter->pos.x][hunter->pos.y][player->pos.x][player->pos.y];
+      next[hunter->pos.row][hunter->pos.col][player->pos.row][player->pos.col];
+  printf("hunter wants to move in direction %d\n", hunter->direction);
 }
 
 static void change_player_dir(Player *player) {
@@ -420,7 +432,7 @@ int main(void) {
 
   system("clear");
   display_map(map);
-  printf("time to play!");
+  printf("time to play!\n");
 
   while (!game->won && !game->lost) {
     change_player_dir(player);
@@ -433,9 +445,9 @@ int main(void) {
     display_map(map);
   }
   if (game->won) {
-    printf("You won!");
+    printf("you won!");
   } else {
-    printf("You lost!");
+    printf("you lost!");
   }
   free(player);
   free(hunter);
