@@ -65,7 +65,7 @@ find_package(
   REQUIRED)
 
 # Add the executable
-add_executable(${PROJECT_NAME} finders_keepers.c getdirection.c speechrecog.py)
+add_executable(${PROJECT_NAME} finders_keepers.c getspeech.c speechrecog.py)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})

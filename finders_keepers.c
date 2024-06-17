@@ -1,4 +1,4 @@
-#include "getdirection.h"
+#include "getspeech.h"
 #include <assert.h>
 #include <limits.h>
 #include <mach/mach_port.h>
@@ -273,10 +273,10 @@ static void routing_table(Tile map[][MAP_DIM]) {
 }
 
 static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
-  // for (int i = 0; i < MAP_DIM + 2; i++) {
-  //   printf("▉▉");
-  // }
-  // printf("\n");
+   for (int i = 0; i < MAP_DIM + 2; i++) {
+     printf("▉▉");
+   }
+   printf("\n");
   for (int i = 0; i < MAP_DIM; i++) {
     // printf("▉▉");
     for (int j = 0; j < MAP_DIM; j++) {
@@ -307,7 +307,31 @@ static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
   //   printf("▉▉");
   // }
   printf("\n");
+
+
 }
+
+static void LED_map(Tile map[MAP_DIM][MAP_DIM], struct LedCanvas *offscreen_canvas,struct RGBLedMatrix *matrix){
+    for (int i = 0; i < MAP_DIM; i++) {
+        for (int j = 0; j < MAP_DIM; j++) {
+            switch (map[i][j]) {
+                case BLANK:
+                    led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0 ); break;
+                case WALL:
+                    led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 255 ); break;
+                case TREASURE:
+                    led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 0 ); break;
+                case PLAYER:
+                    led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 255 ); break;
+                case HUNTER:
+                    led_canvas_set_pixel(offscreen_canvas, i, j, 255, 0, 0 ); break;
+            }
+        }
+    }
+    offscreen_canvas = led_matrix_swap_on_vsync(matrix, offscreen_canvas);
+}
+
+
 
 static bool valid_move(Coord *c, Dir direction) {
   int row = c->row, col = c->col;
@@ -401,7 +425,7 @@ static void change_hunter_dir(Hunter *hunter, Player *player) {
 }
 
 static void change_player_dir(Player *player) {
-  // int direction = getDirection();
+//   int direction = getDirection();
   int direction;
   scanf("%d", &direction);
   if (direction == UNKNOWN) {
@@ -420,14 +444,17 @@ static GameState *init_game() {
 
 int main(int argc, char **argv) {
   Tile map[MAP_DIM][MAP_DIM];
-  gen_map(map);
-  Player *player = init_player(map);
-  Hunter *hunter = init_hunter(map);
-  GameState *game = init_game();
-  set_treasure(map, game);
+//  gen_map(map);
+//  Player *player = init_player(map);
+//  Hunter *hunter = init_hunter(map);
+//  GameState *game = init_game();
+//  set_treasure(map, game);
   struct RGBLedMatrixOptions options;
   struct RGBLedMatrix *matrix;
   struct LedCanvas *offscreen_canvas;
+  Player *player;
+  Hunter *hunter;
+  GameState *game;
 
   memset(&options, 0, sizeof(options));
   options.rows = 32;
@@ -439,35 +466,43 @@ int main(int argc, char **argv) {
 
   offscreen_canvas = led_matrix_create_offscreen_canvas(matrix);
 
-  system("clear");
-  display_map(map);
-  printf("calculating routes...\n");
+//  system("clear");
+//  display_map(map);
+//  printf("calculating routes...\n");
+//
+//  routing_table(map);
+//
+//  system("clear");
+    bool selected = false;
+    bool pass = false;
 
-  routing_table(map);
+  do{
+      gen_map(map);
+      player = init_player(map);
+      hunter = init_hunter(map);
+      game = init_game();
+      set_treasure(map, game);
+      LED_map(map, offscreen_canvas, matrix);
+      while (!selected && !pass){
+          int query = getChoice();
+          if (query == 1) pass = true;
+          else if (query == 2) selected = true;
+      }
+      if (selected) break;
+      free(player);
+      free(hunter);
+      free(game);
+      led_canvas_clear(offscreen_canvas);
 
-  system("clear");
-  display_map(map);
+  } while (1);
+
+    printf("calculating routes...\n");
+    routing_table(map);
+
   printf("time to play!\n");
 
   while (!game->won && !game->lost) {
-      for (int i = 0; i < MAP_DIM; i++) {
-          for (int j = 0; j < MAP_DIM; j++) {
-              switch (map[i][j]) {
-                  case BLANK:
-                      led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0 ); break;
-                  case WALL:
-                      led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 255 ); break;
-                  case TREASURE:
-                      led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 0 ); break;
-                  case PLAYER:
-                      led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 255 ); break;
-                  case HUNTER:
-                      led_canvas_set_pixel(offscreen_canvas, i, j, 255, 0, 0 ); break;
-              }
-          }
-      }
-      offscreen_canvas = led_matrix_swap_on_vsync(matrix, offscreen_canvas);
-
+    LED_map(map, offscreen_canvas, matrix);
     change_player_dir(player);
     change_hunter_dir(hunter, player);
     move_player(map, player, game);
@@ -475,16 +510,10 @@ int main(int argc, char **argv) {
     game->won = check_victory(game);
     game->lost = check_lost(player, hunter);
     system("clear");
-    display_map(map);
 
   }
 
-
     led_canvas_clear(offscreen_canvas);
-
-
-
-
 
 
   if (game->won) {
@@ -492,7 +521,7 @@ int main(int argc, char **argv) {
     printf("you won!");
   } else {
       draw_text(offscreen_canvas, load_font("matrix/fonts/4x6.bdf"), 0, 15, 255, 255, 255, "You lost!", 0);
-    printf("you lost!");
+    printf("you lost with a score of %d/4!", game->pts);
   }
     led_matrix_swap_on_vsync(matrix, offscreen_canvas);
   free(player);

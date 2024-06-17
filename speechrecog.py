@@ -8,7 +8,7 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def listen():
+def listenDir():
     r = sr.Recognizer()
 
     with sr.Microphone() as source:
@@ -45,3 +45,23 @@ def listen():
     #
     # except sr.RequestError as e:
     #     print("Sphinx error; {0}".format(e))
+def listenChoice():
+    r = sr.Recognizer()
+
+    with sr.Microphone() as source:
+        print("Say something")
+        audio = r.listen(source, phrase_time_limit=1)
+
+    try:
+        word = r.recognize_whisper(audio, language="english").lower().strip()
+        print(word)
+        if "next" in word:
+            return 1
+        if "select" in word:
+            return 2
+        return 3
+
+    except sr.UnknownValueError:
+        print("Whisper could not understand audio")
+    except sr.RequestError as e:
+        print(f"Could not request results from Whisper; {e}")
