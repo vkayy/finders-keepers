@@ -12,7 +12,7 @@ def listenDir():
     r = sr.Recognizer()
 
     with sr.Microphone() as source:
-        print("Say something")
+        print("Pick the direction you'd like to move in. (right, up, left, down)")
         audio = r.listen(source, phrase_time_limit=1)
 
     try:
@@ -45,12 +45,14 @@ def listenDir():
     #
     # except sr.RequestError as e:
     #     print("Sphinx error; {0}".format(e))
+
+
 def listenChoice():
     r = sr.Recognizer()
 
     with sr.Microphone() as source:
-        print("Say something")
-        audio = r.listen(source, phrase_time_limit=1)
+        print("Would you like to keep this map or skip? ('select' or 'next')")
+        audio = r.listen(source, phrase_time_limit=3)
 
     try:
         word = r.recognize_whisper(audio, language="english").lower().strip()
