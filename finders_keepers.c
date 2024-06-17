@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
+#include "matrix/include/led-matrix-c.h"
 
 #define MAP_DIM 33
 
@@ -416,13 +418,26 @@ static GameState *init_game() {
   return game;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
   Tile map[MAP_DIM][MAP_DIM];
   gen_map(map);
   Player *player = init_player(map);
   Hunter *hunter = init_hunter(map);
   GameState *game = init_game();
   set_treasure(map, game);
+  struct RGBLedMatrixOptions options;
+  struct RGBLedMatrix *matrix;
+  struct LedCanvas *offscreen_canvas;
+
+  memset(&options, 0, sizeof(options));
+  options.rows = 32;
+  options.cols = 32;
+  options.chain_length = 1;
+
+  matrix = led_matrix_create_from_options(&options, &argc, &argv);
+  if (matrix == NULL) return 1;
+
+  offscreen_canvas = led_matrix_create_offscreen_canvas(matrix);
 
   system("clear");
   display_map(map);
@@ -435,6 +450,24 @@ int main(void) {
   printf("time to play!\n");
 
   while (!game->won && !game->lost) {
+      for (int i = 0; i < MAP_DIM; i++) {
+          for (int j = 0; j < MAP_DIM; j++) {
+              switch (map[i][j]) {
+                  case BLANK:
+                      led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0 ); break;
+                  case WALL:
+                      led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 255 ); break;
+                  case TREASURE:
+                      led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 0 ); break;
+                  case PLAYER:
+                      led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 255 ); break;
+                  case HUNTER:
+                      led_canvas_set_pixel(offscreen_canvas, i, j, 255, 0, 0 ); break;
+              }
+          }
+      }
+      offscreen_canvas = led_matrix_swap_on_vsync(matrix, offscreen_canvas);
+
     change_player_dir(player);
     change_hunter_dir(hunter, player);
     move_player(map, player, game);
@@ -443,13 +476,28 @@ int main(void) {
     game->lost = check_lost(player, hunter);
     system("clear");
     display_map(map);
+
   }
+
+
+    led_canvas_clear(offscreen_canvas);
+
+
+
+
+
+
   if (game->won) {
+      draw_text(offscreen_canvas, load_font("matrix/fonts/4x6.bdf"), 0, 15, 255, 255, 255, "You win!", 0);
     printf("you won!");
   } else {
+      draw_text(offscreen_canvas, load_font("matrix/fonts/4x6.bdf"), 0, 15, 255, 255, 255, "You lost!", 0);
     printf("you lost!");
   }
+    led_matrix_swap_on_vsync(matrix, offscreen_canvas);
   free(player);
   free(hunter);
   free(game);
+    sleep(5);
+    led_matrix_delete(matrix);
 }
