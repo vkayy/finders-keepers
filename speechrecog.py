@@ -18,13 +18,13 @@ def listen():
     try:
         word = r.recognize_whisper(audio, language="english").lower().strip()
         print(word)
-        if word == "go right.":
+        if "right" in word:
             return 1
-        if word == "go up.":
+        if "up" in word:
             return 2
-        if word == "go left.":
+        if "left" in word:
             return 3
-        if word == "go down.":
+        if "down" in word:
             return 4
         return 5
 
