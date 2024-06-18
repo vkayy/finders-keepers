@@ -13,13 +13,13 @@
 
 #define MAP_DIM 32
 #define USING_PI false
-#define USING_MIC true
+#define USING_MIC false
 #define USING_AUTO false
 #define USING_ALDOUS false
 #define EASE_FACTOR 160
 #define MIN_DIST 2
-#define MAX_DIST 4
-#define INIT_STEPS_LEFT MIN_DIST + (rand() % (MAX_DIST - MIN_DIST));
+#define MAX_DIST 10
+#define INIT_STEPS_LEFT MIN_DIST + 2 * (rand() % ((MAX_DIST - MIN_DIST) / 2))
 #define NUM_SPAWNERS 16
 
 typedef enum { PATH, WALL, TREASURE, PLAYER, HUNTER } Tile;
@@ -511,20 +511,18 @@ static void place_spawners(Tile map[][MAP_DIM]) {
 
 static void move_builders(Tile map[][MAP_DIM]) {
   while (builder_count) {
-    for (int i = 0; i < builder_count; i++) {
+    for (int i = 0; i < builder_count;) {
       int old_row = builders[i].coord.row;
       int old_col = builders[i].coord.col;
       int new_row = old_row + 2 * dir_row[builders[i].dir];
       int new_col = old_col + 2 * dir_col[builders[i].dir];
 
-      if (builders[i].steps_left == 0 || !position_valid(new_row, new_col)) {
-        do {
-          int direction_change = 2 * (rand() % 2) + 1;
-          builders[i].dir = (builders[i].dir + direction_change) % 4;
-          builders[i].steps_left = INIT_STEPS_LEFT;
-          new_row = old_row + 2 * dir_row[builders[i].dir];
-          new_col = old_col + 2 * dir_col[builders[i].dir];
-        } while (!position_valid(new_row, new_col));
+      while (builders[i].steps_left == 0 || !position_valid(new_row, new_col)) {
+        int direction_change = 2 * (rand() % 2) + 1;
+        builders[i].dir = (builders[i].dir + direction_change) % 4;
+        builders[i].steps_left = INIT_STEPS_LEFT;
+        new_row = old_row + 2 * dir_row[builders[i].dir];
+        new_col = old_col + 2 * dir_col[builders[i].dir];
       }
 
       map[old_row][old_col] = PATH;
@@ -533,20 +531,14 @@ static void move_builders(Tile map[][MAP_DIM]) {
       builders[i].coord.col = new_col;
       builders[i].steps_left -= 2;
 
+      if (map[new_row][new_col] == PATH) {
+        builders[i] = builders[--builder_count];
+        continue;
+      }
+
       system("clear");
       display_map(map);
-    }
-
-    int old_builder_count = builder_count;
-
-    for (int i = 0; i < builder_count; i++) {
-      int row = builders[i].coord.row;
-      int col = builders[i].coord.col;
-      bool end_of_path = map[row][col] == PATH;
-
-      if (end_of_path) {
-        builders[i] = builders[--builder_count];
-      }
+      i++;
     }
   }
 }
@@ -560,7 +552,7 @@ static void gen_map_imperfect(Tile map[][MAP_DIM]) {
 static Player *init_player(Tile map[][MAP_DIM]) {
   Player *player = malloc(sizeof(Player));
   player->pos = bot_left_blank(map);
-  player->direction = RIGHT;
+  player->direction = UNKNOWN;
   map[player->pos.row][player->pos.col] = PLAYER;
   return player;
 }
@@ -568,7 +560,7 @@ static Player *init_player(Tile map[][MAP_DIM]) {
 static Hunter *init_hunter(Tile map[][MAP_DIM]) {
   Hunter *hunter = malloc(sizeof(Hunter));
   hunter->pos = top_right_blank(map);
-  hunter->direction = LEFT;
+  hunter->direction = UNKNOWN;
   map[hunter->pos.row][hunter->pos.col] = HUNTER;
   return hunter;
 }
