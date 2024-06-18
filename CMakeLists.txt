@@ -60,8 +60,8 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 
 # Specify the exact path to the Python 3.9 interpreter
 set(Python3_EXECUTABLE
-    # "/Library/Frameworks/Python.framework/Versions/3.9/bin/python3.9"
-    "/usr/local/Cellar/python@3.9/3.9.19/Frameworks/Python.framework/Versions/3.9/bin/python3.9"
+     "/Library/Frameworks/Python.framework/Versions/3.9/bin/python3.9"
+#    "/usr/local/Cellar/python@3.9/3.9.19/Frameworks/Python.framework/Versions/3.9/bin/python3.9"
 )
 
 # Find Python libraries (assuming you have Python installed)

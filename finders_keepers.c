@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <Python.h>
 
 #define MAP_DIM 32
 #define USING_PI false
@@ -56,6 +58,45 @@ int builder_count = 0;
 
 int dir_x[] = {0, -1, 0, 1};
 int dir_y[] = {1, 0, -1, 0};
+
+void initializePython() {
+    Py_Initialize();
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("sys.path.append(\".\")");
+}
+void finalizePython() {
+    if (Py_FinalizeEx() < 0) {
+        exit(120);
+    }
+}
+
+
+void check_for_fork() {
+    pid_t pid = fork();
+    if (pid == 0) {
+        // Child process
+        printf("Child process: PID %d\n", getpid());
+        _exit(0); // Exit child process immediately
+    } else if (pid > 0) {
+        // Parent process
+        printf("Parent process: PID %d\n", getpid());
+    } else {
+        // Fork failed
+        perror("fork");
+    }
+}
+
+void signal_handler(int signal) {
+    printf("Caught signal %d\n", signal);
+    exit(1);
+}
+
+void setup_signal_handlers() {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+    signal(SIGSEGV, signal_handler); // Catch segmentation faults
+}
+
 
 static Coord top_left_blank(Tile map[][MAP_DIM]) {
   Coord ans;
@@ -485,7 +526,7 @@ static void move_builders(Tile map[][MAP_DIM]) {
       builders[i].steps_left -= 2;
 
       system("clear");
-      display_map(map);
+//      display_map(map);
     }
 
     int old_builder_count = builder_count;
@@ -551,10 +592,12 @@ static void change_player_dir(Player *player) {
     int direction;
     scanf("%d", &direction);
   }
+    printf("direction chosen is %d\n",direction);
   if (direction == UNKNOWN) {
     return;
   }
   player->direction = direction;
+    printf("dir set");
 }
 
 static void auto_change_player_dir(Tile map[][MAP_DIM], GameState *game,
@@ -619,7 +662,11 @@ static GameState *init_game(Tile map[][MAP_DIM]) {
   return game;
 }
 
+int i = 0;
+int j =0;
+
 int main(int argc, char **argv) {
+    setup_signal_handlers();
   Tile map[MAP_DIM][MAP_DIM];
   Player *player;
   Hunter *hunter;
@@ -642,16 +689,23 @@ int main(int argc, char **argv) {
     offscreen_canvas = led_matrix_create_offscreen_canvas(matrix);
   }
 
-  bool selected = false;
-  bool pass = false;
 
-  if (false) {
+
+
+  if (USING_MIC) {
+      initializePython();
+        check_for_fork();
+      printf("%s: Thread ID: %lu\n", "counting", (unsigned long)pthread_self());
+
     do {
+        bool selected = false;
+        bool pass = false;
       if (USING_ALDOUS) {
         gen_map_aldous_broder(map);
       } else {
         gen_map_imperfect(map);
       }
+//        printf("How many times: %d\n", i++);
       player = init_player(map);
       hunter = init_hunter(map);
       game = init_game(map);
@@ -663,17 +717,23 @@ int main(int argc, char **argv) {
         display_map(map);
       }
       while (!selected && !pass) {
+//          printf("hello");
         int query = getChoice();
-        sleep(1);
+
+//          printf("hello12");
+//        sleep(1);
         if (query == 1) {
           pass = true;
         } else if (query == 2) {
           selected = true;
         }
       }
-      if (selected) {
-        break;
-      }
+//      if (selected) {
+//        break;
+//      }
+        if (selected) {
+            break;
+        }
       free(player);
       free(hunter);
       free(game);
@@ -702,17 +762,23 @@ int main(int argc, char **argv) {
   printf("time to play!\n");
 
   while (!game->won && !game->lost) {
+      printf("running");
     if (USING_PI) {
       LED_map(map, offscreen_canvas, matrix);
     }
     if (USING_AUTO) {
       auto_change_player_dir(map, game, player, hunter);
     } else {
+        printf("testing1");
       change_player_dir(player);
+        printf("testing");
     }
+      printf("last3");
     change_hunter_dir(hunter, player);
+      printf("last");
 
     move_player(map, player, game);
+      printf("last2");
     game->won = check_victory(game);
     game->lost = check_lost(player, hunter);
     if (game->won || game->lost) {
@@ -721,6 +787,7 @@ int main(int argc, char **argv) {
       break;
     }
 
+
     move_hunter(map, hunter);
     game->won = check_victory(game);
     game->lost = check_lost(player, hunter);
@@ -728,6 +795,8 @@ int main(int argc, char **argv) {
     system("clear");
     display_map(map);
     usleep(20000);
+
+
   }
 
   if (USING_PI) {
@@ -759,4 +828,6 @@ int main(int argc, char **argv) {
   if (USING_PI) {
     led_matrix_delete(matrix);
   }
+  if (USING_MIC) finalizePython();
+
 }

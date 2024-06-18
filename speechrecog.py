@@ -13,25 +13,34 @@ def listenDir():
 
     with sr.Microphone() as source:
         print("Pick the direction you'd like to move in. (right, up, left, down)")
-        audio = r.listen(source, phrase_time_limit=1)
+        r.adjust_for_ambient_noise(source)
+        try:
+            audio = r.listen(source, timeout = 5, phrase_time_limit = 5)
+        except:
+            return 5
 
     try:
-        word = r.recognize_whisper(audio, language="english").lower().strip()
-        print(word)
+
+        word = r.recognize_sphinx(audio).lower().strip()
+
+        print("The word captured is", word)
         if "right" in word:
-            return 1
+            return 0
         if "up" in word:
-            return 2
+            return 1
         if "left" in word:
-            return 3
+            return 2
         if "down" in word:
-            return 4
-        return 5
+            return 3
+        return 4
 
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
+        return 5
     except sr.RequestError as e:
         print(f"Could not request results from Whisper; {e}")
+        return 5
+
 
     # try:
     #     maybe = r.recognize_sphinx(audio)
@@ -51,19 +60,26 @@ def listenChoice():
     r = sr.Recognizer()
 
     with sr.Microphone() as source:
+        r.adjust_for_ambient_noise(source)
         print("Would you like to keep this map or skip? ('select' or 'next')")
-        audio = r.listen(source, phrase_time_limit=3)
+        try:
+            audio = r.listen(source, timeout = 5, phrase_time_limit = 5)
+        except:
+            return 3
 
     try:
-        word = r.recognize_whisper(audio, language="english").lower().strip()
-        print(word)
+        word = r.recognize_sphinx(audio).lower().strip()
+        print("The word captured is", word)
         if "next" in word:
             return 1
-        if "select" in word:
+        if "start" in word or "game" in word:
             return 2
         return 3
 
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
+        return 3
     except sr.RequestError as e:
         print(f"Could not request results from Whisper; {e}")
+        return 3
+
