@@ -1,21 +1,22 @@
 #include "getspeech.h"
 #include "matrix/include/led-matrix-c.h"
+#include <Python.h>
 #include <assert.h>
 #include <limits.h>
 #include <mach/mach_port.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <Python.h>
 
 #define MAP_DIM 32
 #define USING_PI false
 #define USING_MIC true
 #define USING_AUTO false
 #define USING_ALDOUS false
+#define EASE_FACTOR 160
 #define MIN_DIST 2
 #define MAX_DIST 4
 #define INIT_STEPS_LEFT MIN_DIST + (rand() % (MAX_DIST - MIN_DIST));
@@ -56,47 +57,45 @@ typedef struct {
 Builder builders[NUM_SPAWNERS * 4];
 int builder_count = 0;
 
-int dir_x[] = {0, -1, 0, 1};
-int dir_y[] = {1, 0, -1, 0};
+int dir_row[] = {0, -1, 0, 1, 0};
+int dir_col[] = {1, 0, -1, 0, 0};
 
 void initializePython() {
-    Py_Initialize();
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.path.append(\".\")");
+  Py_Initialize();
+  PyRun_SimpleString("import sys");
+  PyRun_SimpleString("sys.path.append(\".\")");
 }
 void finalizePython() {
-    if (Py_FinalizeEx() < 0) {
-        exit(120);
-    }
+  if (Py_FinalizeEx() < 0) {
+    exit(120);
+  }
 }
 
-
 void check_for_fork() {
-    pid_t pid = fork();
-    if (pid == 0) {
-        // Child process
-        printf("Child process: PID %d\n", getpid());
-        _exit(0); // Exit child process immediately
-    } else if (pid > 0) {
-        // Parent process
-        printf("Parent process: PID %d\n", getpid());
-    } else {
-        // Fork failed
-        perror("fork");
-    }
+  pid_t pid = fork();
+  if (pid == 0) {
+    // Child process
+    // printf("Child process: PID %d\n", getpid());
+    _exit(0); // Exit child process immediately
+  } else if (pid > 0) {
+    // Parent process
+    // printf("Parent process: PID %d\n", getpid());
+  } else {
+    // Fork failed
+    perror("fork");
+  }
 }
 
 void signal_handler(int signal) {
-    printf("Caught signal %d\n", signal);
-    exit(1);
+  // printf("Caught signal %d\n", signal);
+  exit(1);
 }
 
 void setup_signal_handlers() {
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-    signal(SIGSEGV, signal_handler); // Catch segmentation faults
+  signal(SIGINT, signal_handler);
+  signal(SIGTERM, signal_handler);
+  signal(SIGSEGV, signal_handler); // Catch segmentation faults
 }
-
 
 static Coord top_left_blank(Tile map[][MAP_DIM]) {
   Coord ans;
@@ -152,6 +151,34 @@ static Coord bot_right_blank(Tile map[][MAP_DIM]) {
     }
   }
   assert(false);
+}
+
+static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
+  for (int i = 0; i < MAP_DIM; i++) {
+    for (int j = 0; j < MAP_DIM; j++) {
+      switch (map[i][j]) {
+      case PATH:
+        printf("  ");
+        break;
+      case WALL:
+        printf("▉▉");
+        break;
+      case TREASURE:
+        printf(" ⟡");
+        break;
+      case PLAYER:
+        printf("☺ ");
+        break;
+      case HUNTER:
+        printf("☹ ");
+        break;
+      default:
+        printf(" ?");
+      }
+    }
+    printf("\n");
+  }
+  printf("\n");
 }
 
 static bool check_victory(GameState *game) { return game->pts == 4; }
@@ -216,59 +243,82 @@ static bool can_move(Tile map[][MAP_DIM], int x, int y, Dir direction) {
 }
 
 static void move_player(Tile map[][MAP_DIM], Player *player, GameState *game) {
-  if (!can_move(map, player->pos.row, player->pos.col, player->direction))
+  if (!can_move(map, player->pos.row, player->pos.col, player->direction)) {
     return;
-  map[player->pos.row][player->pos.col] = PATH;
-  switch (player->direction) {
-  case RIGHT:
-    player->pos.col++;
-    break;
-  case UP:
-    player->pos.row--;
-    break;
-  case LEFT:
-    player->pos.col--;
-    break;
-  case DOWN:
-    player->pos.row++;
-    break;
-  case UNKNOWN:
-    break;
-  }
-  if (map[player->pos.row][player->pos.col] == TREASURE) {
-    game->pts++;
-    if (!check_victory(game)) {
-      set_treasure(map, game);
-    }
   }
 
-  map[player->pos.row][player->pos.col] = PLAYER;
+  Tile left_tile = PATH;
+  Tile right_tile = PATH;
+
+  do {
+    map[player->pos.row][player->pos.col] = PATH;
+
+    player->pos.row += dir_row[player->direction];
+    player->pos.col += dir_col[player->direction];
+
+    if (map[player->pos.row][player->pos.col] == TREASURE) {
+      game->pts++;
+      if (!check_victory(game)) {
+        set_treasure(map, game);
+      }
+    }
+
+    map[player->pos.row][player->pos.col] = PLAYER;
+    system("clear");
+    display_map(map);
+
+    Dir turn_left = (player->direction + 3) % 4;
+    Dir turn_right = (player->direction + 1) % 4;
+
+    int left_row = player->pos.row + dir_row[turn_left];
+    int left_col = player->pos.col + dir_col[turn_left];
+    int right_row = player->pos.row + dir_row[turn_right];
+    int right_col = player->pos.col + dir_col[turn_right];
+
+    left_tile = map[left_row][left_col];
+    right_tile = map[right_row][right_col];
+    usleep(20000);
+
+  } while (left_tile != PATH && right_tile != PATH &&
+           can_move(map, player->pos.row, player->pos.col, player->direction));
 }
 
 static void move_hunter(Tile map[][MAP_DIM], Hunter *hunter) {
-  if (!can_move(map, hunter->pos.row, hunter->pos.col, hunter->direction))
+  if (!can_move(map, hunter->pos.row, hunter->pos.col, hunter->direction)) {
     return;
-  if (map[hunter->pos.row][hunter->pos.col] != TREASURE)
-    map[hunter->pos.row][hunter->pos.col] = PATH;
-  switch (hunter->direction) {
-  case RIGHT:
-    hunter->pos.col++;
-    break;
-  case UP:
-    hunter->pos.row--;
-    break;
-  case LEFT:
-    hunter->pos.col--;
-    break;
-  case DOWN:
-    hunter->pos.row++;
-    break;
-  case UNKNOWN:
-    break;
   }
+  Tile left_tile = PATH;
+  Tile right_tile = PATH;
 
-  if (map[hunter->pos.row][hunter->pos.col] != TREASURE)
-    map[hunter->pos.row][hunter->pos.col] = HUNTER;
+  do {
+    if (map[hunter->pos.row][hunter->pos.col] != TREASURE) {
+      map[hunter->pos.row][hunter->pos.col] = PATH;
+    }
+
+    hunter->pos.row += dir_row[hunter->direction];
+    hunter->pos.col += dir_col[hunter->direction];
+
+    if (map[hunter->pos.row][hunter->pos.col] != TREASURE) {
+      map[hunter->pos.row][hunter->pos.col] = HUNTER;
+    }
+
+    system("clear");
+    display_map(map);
+
+    Dir turn_left = (hunter->direction + 3) % 4;
+    Dir turn_right = (hunter->direction + 1) % 4;
+
+    int left_row = hunter->pos.row + dir_row[turn_left];
+    int left_col = hunter->pos.col + dir_col[turn_left];
+    int right_row = hunter->pos.row + dir_row[turn_right];
+    int right_col = hunter->pos.col + dir_col[turn_right];
+
+    left_tile = map[left_row][left_col];
+    right_tile = map[right_row][right_col];
+    usleep(20000);
+
+  } while (left_tile != PATH && right_tile != PATH &&
+           can_move(map, hunter->pos.row, hunter->pos.col, hunter->direction));
 }
 
 static bool check_lost(Player *player, Hunter *hunter) {
@@ -338,34 +388,6 @@ static void routing_table(Tile map[][MAP_DIM]) {
       }
     }
   }
-}
-
-static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
-  for (int i = 0; i < MAP_DIM; i++) {
-    for (int j = 0; j < MAP_DIM; j++) {
-      switch (map[i][j]) {
-      case PATH:
-        printf("  ");
-        break;
-      case WALL:
-        printf("▉▉");
-        break;
-      case TREASURE:
-        printf("⟡ ");
-        break;
-      case PLAYER:
-        printf("☺ ");
-        break;
-      case HUNTER:
-        printf("☹ ");
-        break;
-      default:
-        printf("? ");
-      }
-    }
-    printf("\n");
-  }
-  printf("\n");
 }
 
 static void LED_map(Tile map[MAP_DIM][MAP_DIM],
@@ -439,22 +461,8 @@ static void gen_map_aldous_broder(Tile map[][MAP_DIM]) {
     Dir direction = rand() % 4;
     Coord next = current;
 
-    switch (direction) {
-    case RIGHT:
-      next.col += 2;
-      break;
-    case UP:
-      next.row -= 2;
-      break;
-    case LEFT:
-      next.col -= 2;
-      break;
-    case DOWN:
-      next.row += 2;
-      break;
-    default:
-      break;
-    }
+    next.row += 2 * dir_row[direction];
+    next.col += 2 * dir_col[direction];
 
     if (valid_move(&current, direction)) {
       if (map[next.row][next.col] == WALL) {
@@ -506,16 +514,16 @@ static void move_builders(Tile map[][MAP_DIM]) {
     for (int i = 0; i < builder_count; i++) {
       int old_row = builders[i].coord.row;
       int old_col = builders[i].coord.col;
-      int new_row = old_row + 2 * dir_x[builders[i].dir];
-      int new_col = old_col + 2 * dir_y[builders[i].dir];
+      int new_row = old_row + 2 * dir_row[builders[i].dir];
+      int new_col = old_col + 2 * dir_col[builders[i].dir];
 
       if (builders[i].steps_left == 0 || !position_valid(new_row, new_col)) {
         do {
           int direction_change = 2 * (rand() % 2) + 1;
           builders[i].dir = (builders[i].dir + direction_change) % 4;
           builders[i].steps_left = INIT_STEPS_LEFT;
-          new_row = old_row + 2 * dir_x[builders[i].dir];
-          new_col = old_col + 2 * dir_y[builders[i].dir];
+          new_row = old_row + 2 * dir_row[builders[i].dir];
+          new_col = old_col + 2 * dir_col[builders[i].dir];
         } while (!position_valid(new_row, new_col));
       }
 
@@ -526,7 +534,7 @@ static void move_builders(Tile map[][MAP_DIM]) {
       builders[i].steps_left -= 2;
 
       system("clear");
-//      display_map(map);
+      display_map(map);
     }
 
     int old_builder_count = builder_count;
@@ -547,11 +555,6 @@ static void gen_map_imperfect(Tile map[][MAP_DIM]) {
   init_map(map);
   place_spawners(map);
   move_builders(map);
-  for (int i = 0; i < MAP_DIM; i++) {
-    for (int j = 0; j < MAP_DIM; j++) {
-      map[i][j] = map[i][j];
-    }
-  }
 }
 
 static Player *init_player(Tile map[][MAP_DIM]) {
@@ -573,15 +576,15 @@ static Hunter *init_hunter(Tile map[][MAP_DIM]) {
 static void change_hunter_dir(Hunter *hunter, Player *player) {
   hunter->direction =
       next[hunter->pos.row][hunter->pos.col][player->pos.row][player->pos.col];
-  int random_boundary = rand() % 200;
+  int random_boundary = rand() % EASE_FACTOR;
   int shortest_distance =
       len[hunter->pos.row][hunter->pos.col][player->pos.row][player->pos.col];
-  printf("shortest distance from hunter to player: %d\n", shortest_distance);
+  // printf("shortest distance from hunter to player: %d\n", shortest_distance);
   if (random_boundary < shortest_distance) {
     hunter->direction = rand() % 4;
-    printf("randomised!\n");
+    // printf("randomised!\n");
   }
-  printf("hunter wants to move in direction %d\n", hunter->direction);
+  // printf("hunter wants to move in direction %d\n", hunter->direction);
 }
 
 static void change_player_dir(Player *player) {
@@ -589,15 +592,14 @@ static void change_player_dir(Player *player) {
   if (USING_MIC) {
     direction = getDirection();
   } else {
-    int direction;
     scanf("%d", &direction);
   }
-    printf("direction chosen is %d\n",direction);
+  printf("direction chosen is %d\n", direction);
   if (direction == UNKNOWN) {
     return;
   }
   player->direction = direction;
-    printf("dir set");
+  // printf("dir set");
 }
 
 static void auto_change_player_dir(Tile map[][MAP_DIM], GameState *game,
@@ -616,22 +618,8 @@ static void auto_change_player_dir(Tile map[][MAP_DIM], GameState *game,
     }
 
     Coord new_pos = current_pos;
-    switch (dir) {
-    case RIGHT:
-      new_pos.col++;
-      break;
-    case UP:
-      new_pos.row--;
-      break;
-    case LEFT:
-      new_pos.col--;
-      break;
-    case DOWN:
-      new_pos.row++;
-      break;
-    default:
-      break;
-    }
+    new_pos.row += dir_row[dir];
+    new_pos.col += dir_col[dir];
 
     int distance_to_treasure =
         len[new_pos.row][new_pos.col][treasure_pos.row][treasure_pos.col];
@@ -650,7 +638,7 @@ static void auto_change_player_dir(Tile map[][MAP_DIM], GameState *game,
     player->direction = best_direction;
   }
 
-  printf("player wants to move in direction %d\n", best_direction);
+  // printf("player wants to move in direction %d\n", best_direction);
 }
 
 static GameState *init_game(Tile map[][MAP_DIM]) {
@@ -663,10 +651,10 @@ static GameState *init_game(Tile map[][MAP_DIM]) {
 }
 
 int i = 0;
-int j =0;
+int j = 0;
 
 int main(int argc, char **argv) {
-    setup_signal_handlers();
+  setup_signal_handlers();
   Tile map[MAP_DIM][MAP_DIM];
   Player *player;
   Hunter *hunter;
@@ -689,23 +677,20 @@ int main(int argc, char **argv) {
     offscreen_canvas = led_matrix_create_offscreen_canvas(matrix);
   }
 
-
-
-
   if (USING_MIC) {
-      initializePython();
-        check_for_fork();
-      printf("%s: Thread ID: %lu\n", "counting", (unsigned long)pthread_self());
+    initializePython();
+    check_for_fork();
+    // printf("%s: Thread ID: %lu\n", "counting", (unsigned
+    // long)pthread_self());
 
     do {
-        bool selected = false;
-        bool pass = false;
+      bool selected = false;
+      bool pass = false;
       if (USING_ALDOUS) {
         gen_map_aldous_broder(map);
       } else {
         gen_map_imperfect(map);
       }
-//        printf("How many times: %d\n", i++);
       player = init_player(map);
       hunter = init_hunter(map);
       game = init_game(map);
@@ -717,23 +702,17 @@ int main(int argc, char **argv) {
         display_map(map);
       }
       while (!selected && !pass) {
-//          printf("hello");
         int query = getChoice();
 
-//          printf("hello12");
-//        sleep(1);
         if (query == 1) {
           pass = true;
         } else if (query == 2) {
           selected = true;
         }
       }
-//      if (selected) {
-//        break;
-//      }
-        if (selected) {
-            break;
-        }
+      if (selected) {
+        break;
+      }
       free(player);
       free(hunter);
       free(game);
@@ -759,34 +738,30 @@ int main(int argc, char **argv) {
   printf("calculating routes...\n");
   routing_table(map);
 
-  printf("time to play!\n");
+  system("clear");
+  display_map(map);
+  // printf("time to play!\n");
 
   while (!game->won && !game->lost) {
-      printf("running");
     if (USING_PI) {
       LED_map(map, offscreen_canvas, matrix);
     }
     if (USING_AUTO) {
       auto_change_player_dir(map, game, player, hunter);
     } else {
-        printf("testing1");
       change_player_dir(player);
-        printf("testing");
     }
-      printf("last3");
     change_hunter_dir(hunter, player);
-      printf("last");
 
     move_player(map, player, game);
-      printf("last2");
     game->won = check_victory(game);
     game->lost = check_lost(player, hunter);
+
     if (game->won || game->lost) {
       system("clear");
       display_map(map);
       break;
     }
-
 
     move_hunter(map, hunter);
     game->won = check_victory(game);
@@ -795,8 +770,6 @@ int main(int argc, char **argv) {
     system("clear");
     display_map(map);
     usleep(20000);
-
-
   }
 
   if (USING_PI) {
@@ -820,14 +793,15 @@ int main(int argc, char **argv) {
   if (USING_PI) {
     led_matrix_swap_on_vsync(matrix, offscreen_canvas);
   }
+
   free(player);
   free(hunter);
   free(game);
-  sleep(5);
 
   if (USING_PI) {
     led_matrix_delete(matrix);
   }
-  if (USING_MIC) finalizePython();
-
+  if (USING_MIC) {
+    finalizePython();
+  }
 }
