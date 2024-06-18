@@ -61,7 +61,7 @@ def listenChoice():
         r.adjust_for_ambient_noise(source)
         print("Would you like to keep this map or skip? ('start the game' or 'next')")
         try:
-            audio = r.listen(source, timeout=5, phrase_time_limit=5)
+            audio = r.listen(source, phrase_time_limit=5)
         except:
             return 3
 
