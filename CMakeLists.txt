@@ -34,6 +34,14 @@ set(SOURCES
     # matrix/include/threaded-canvas-manipulator.h
 )
 
+# Add the executable
+
+# set(SOURCES finders_keepers.c getspeech.c speechrecog.py
+# matrix/lib/led-matrix.cc matrix/lib/graphics.cc matrix/include/canvas.h
+# matrix/include/content-streamer.h matrix/include/graphics.h
+# matrix/include/led-matrix-c.h matrix/include/led-matrix.h
+# matrix/include/thread.h matrix/include/threaded-canvas-manipulator.h)
+#
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE matrix/include)
