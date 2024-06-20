@@ -20,8 +20,8 @@ find_package(
   REQUIRED)
 
 # Remove CMake's compiler identification files from SRC_FILES and RGB_SRC_FILES
-list(FILTER SRC_FILES EXCLUDE REGEX "CompilerIdC")
-list(FILTER RGB_SRC_FILES EXCLUDE REGEX "CompilerIdC")
+list(FILTER SRC_FILES EXCLUDE REGEX "CCompilerId")
+list(FILTER RGB_SRC_FILES EXCLUDE REGEX "CCompilerId")
 
 # Remove example files or files that have their own main function from
 # RGB_SRC_FILES
@@ -30,6 +30,8 @@ list(FILTER RGB_SRC_FILES EXCLUDE REGEX "examples-api-use")
 # Add the executable
 include_directories(${PROJECT_SOURCE_DIR}/matrix/lib)
 include_directories(${PROJECT_SOURCE_DIR}/matrix/include)
+
+file(GLOB_RECURSE REMOVE_CMAKE "cmake-build-debug/*")
 
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/*.c)
 file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/*.h)
