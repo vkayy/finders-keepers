@@ -20,7 +20,6 @@ find_package(
   REQUIRED)
 
 # Add the executable
-target_include_directories(${PROJECT_NAME} PRIVATE matrix)
 
 set(SOURCES
     finders_keepers.c
@@ -38,6 +37,7 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+target_include_directories(${PROJECT_NAME} PRIVATE matrix)
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 
