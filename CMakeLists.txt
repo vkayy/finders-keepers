@@ -25,7 +25,8 @@ include_directories(${PROJECT_SOURCE_DIR}/matrix/include)
 
 file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/*.c)
 file(GLOB HEADER_FILES ${PROJECT_SOURCE_DIR}/*.h)
-file(GLOB RGB_SRC_FILES ${PROJECT_SOURCE_DIR}/matrix/lib/*.cc)
+file(GLOB RGB_SRC_FILES ${PROJECT_SOURCE_DIR}/matrix/lib/*.c
+     ${PROJECT_SOURCE_DIR}/matrix/lib/*.cc)
 file(GLOB RGB_HEADER_FILES ${PROJECT_SOURCE_DIR}/matrix/include/*.h
      ${PROJECT_SOURCE_DIR}/matrix/lib/*.h)
 
