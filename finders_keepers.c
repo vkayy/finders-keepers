@@ -12,10 +12,11 @@
 #include <unistd.h>
 
 #define MAP_DIM 32
-#define USING_PI false
+#define USING_PI true
 #define USING_MIC false
 #define USING_AUTO false
 #define USING_ALDOUS false
+#define JUNCTION_STOP true
 #define EASE_FACTOR 160
 #define MIN_DIST 2
 #define MAX_DIST 10
@@ -249,6 +250,7 @@ static void move_player(Tile map[][MAP_DIM], Player *player, GameState *game) {
 
   Tile left_tile = PATH;
   Tile right_tile = PATH;
+  bool junction_condition = false;
 
   do {
     map[player->pos.row][player->pos.col] = PATH;
@@ -279,7 +281,9 @@ static void move_player(Tile map[][MAP_DIM], Player *player, GameState *game) {
     right_tile = map[right_row][right_col];
     usleep(20000);
 
-  } while (left_tile != PATH && right_tile != PATH &&
+    junction_condition = left_tile != PATH && right_tile != PATH;
+
+  } while ((!JUNCTION_STOP || junction_condition) &&
            can_move(map, player->pos.row, player->pos.col, player->direction));
 }
 
