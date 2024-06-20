@@ -21,41 +21,24 @@ find_package(
 
 # Add the executable
 
-set(SOURCES
-    finders_keepers.c
-    getspeech.c
-    speechrecog.py
-    matrix/lib/led-matrix.cc
-    matrix/lib/led-matrix-c.cc
-    matrix/lib/graphics.cc
-    # matrix/include/canvas.h matrix/include/content-streamer.h
-    # matrix/include/graphics.h matrix/include/led-matrix-c.h
-    # matrix/include/led-matrix.h matrix/include/thread.h
-    # matrix/include/threaded-canvas-manipulator.h
-)
+include_directories(${PROJECT_SOURCE_DIR}/matrix/lib)
+include_directories(${PROJECT_SOURCE_DIR}/matrix/include)
 
-# Add the executable
+file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/*.c)
+file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/*.h)
+file(GLOB_RECURSE RGB_SRC_FILES ${PROJECT_SOURCE_DIR}/matrix/lib/*.cc)
+file(GLOB_RECURSE RGB_HEADER_FILES ${PROJECT_SOURCE_DIR}/matrix/include/*.h)
 
-# set(SOURCES finders_keepers.c getspeech.c speechrecog.py
-# matrix/lib/led-matrix.cc matrix/lib/graphics.cc matrix/include/canvas.h
-# matrix/include/content-streamer.h matrix/include/graphics.h
-# matrix/include/led-matrix-c.h matrix/include/led-matrix.h
-# matrix/include/thread.h matrix/include/threaded-canvas-manipulator.h)
-#
-add_executable(${PROJECT_NAME} ${SOURCES})
-
-target_include_directories(${PROJECT_NAME} PRIVATE matrix/include)
-
-# Include directories
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
-
-# Specify the libraries to link against
-set(LIBS matrix/lib/librgbmatrix.a # Assuming this is the compiled static
-                                   # library
-)
-
-# Link the rpi-rgb-led-matrix library
-target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
+add_executable(
+  ${PROJECT_NAME}
+  finders_keepers.c
+  getspeech.c
+  speechrecog.py
+  ${RGB_SRC_FILES}
+  /
+  ${RGB_HEADER_FILES}
+  ${SRC_FILES}
+  ${HEADER_FILES})
 
 # Link the Python libraries to your project
 target_link_libraries(${PROJECT_NAME} PRIVATE Python3::Python)
