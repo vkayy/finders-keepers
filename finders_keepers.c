@@ -3,7 +3,6 @@
 #include <Python.h>
 #include <assert.h>
 #include <limits.h>
-#include <mach/mach_port.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -85,17 +84,6 @@ void check_for_fork() {
     // Fork failed
     perror("fork");
   }
-}
-
-void signal_handler(int signal) {
-  // printf("Caught signal %d\n", signal);
-  exit(1);
-}
-
-void setup_signal_handlers() {
-  signal(SIGINT, signal_handler);
-  signal(SIGTERM, signal_handler);
-  signal(SIGSEGV, signal_handler); // Catch segmentation faults
 }
 
 static Coord top_left_blank(Tile map[][MAP_DIM]) {
@@ -650,7 +638,6 @@ int i = 0;
 int j = 0;
 
 int main(int argc, char **argv) {
-  setup_signal_handlers();
   Tile map[MAP_DIM][MAP_DIM];
   Player *player;
   Hunter *hunter;
