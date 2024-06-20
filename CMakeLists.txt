@@ -26,6 +26,7 @@ set(SOURCES
     getspeech.c
     speechrecog.py
     matrix/lib/led-matrix.cc
+    matrix/lib/led-matrix-c.cc
     matrix/lib/graphics.cc
     # matrix/include/canvas.h matrix/include/content-streamer.h
     # matrix/include/graphics.h matrix/include/led-matrix-c.h
