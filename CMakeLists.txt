@@ -19,24 +19,14 @@ find_package(
   COMPONENTS Interpreter Development
   REQUIRED)
 
-# Remove CMake's compiler identification files from SRC_FILES and RGB_SRC_FILES
-list(FILTER SRC_FILES EXCLUDE REGEX "CCompilerId")
-list(FILTER RGB_SRC_FILES EXCLUDE REGEX "CCompilerId")
-
-# Remove example files or files that have their own main function from
-# RGB_SRC_FILES
-list(FILTER RGB_SRC_FILES EXCLUDE REGEX "examples-api-use")
-
 # Add the executable
 include_directories(${PROJECT_SOURCE_DIR}/matrix/lib)
 include_directories(${PROJECT_SOURCE_DIR}/matrix/include)
 
-file(GLOB_RECURSE REMOVE_CMAKE "cmake-build-debug/*")
-
-file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/*.c)
-file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/*.h)
-file(GLOB_RECURSE RGB_SRC_FILES ${PROJECT_SOURCE_DIR}/matrix/lib/*.cc)
-file(GLOB_RECURSE RGB_HEADER_FILES ${PROJECT_SOURCE_DIR}/matrix/include/*.h)
+file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/*.c)
+file(GLOB HEADER_FILES ${PROJECT_SOURCE_DIR}/*.h)
+file(GLOB RGB_SRC_FILES ${PROJECT_SOURCE_DIR}/matrix/lib/*.cc)
+file(GLOB RGB_HEADER_FILES ${PROJECT_SOURCE_DIR}/matrix/include/*.h)
 
 add_executable(${PROJECT_NAME} speechrecog.py ${RGB_SRC_FILES} /
                                ${RGB_HEADER_FILES} ${SRC_FILES} ${HEADER_FILES})
