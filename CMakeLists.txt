@@ -45,8 +45,17 @@ set(SOURCES
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE matrix/include)
+
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
+
+# Specify the libraries to link against
+set(LIBS matrix/lib/librgbmatrix.a # Assuming this is the compiled static
+                                   # library
+)
+
+# Link the rpi-rgb-led-matrix library
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 
 # Link the Python libraries to your project
 target_link_libraries(${PROJECT_NAME} PRIVATE Python3::Python)
