@@ -27,7 +27,7 @@ add_executable(
 
 # target_include_directories(${PROJECT_NAME} PRIVATE matrix)
 
-include_directories(matrix/include)
+target_include_directories(${PROJECT_NAME} PRIVATE matrix/include)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
