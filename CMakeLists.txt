@@ -29,16 +29,8 @@ file(GLOB_RECURSE HEADER_FILES ${PROJECT_SOURCE_DIR}/*.h)
 file(GLOB_RECURSE RGB_SRC_FILES ${PROJECT_SOURCE_DIR}/matrix/lib/*.cc)
 file(GLOB_RECURSE RGB_HEADER_FILES ${PROJECT_SOURCE_DIR}/matrix/include/*.h)
 
-add_executable(
-  ${PROJECT_NAME}
-  finders_keepers.c
-  getspeech.c
-  speechrecog.py
-  ${RGB_SRC_FILES}
-  /
-  ${RGB_HEADER_FILES}
-  ${SRC_FILES}
-  ${HEADER_FILES})
+add_executable(${PROJECT_NAME} speechrecog.py ${RGB_SRC_FILES} /
+                               ${RGB_HEADER_FILES} ${SRC_FILES} ${HEADER_FILES})
 
 # Link the Python libraries to your project
 target_link_libraries(${PROJECT_NAME} PRIVATE Python3::Python)
