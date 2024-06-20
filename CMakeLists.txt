@@ -19,8 +19,15 @@ find_package(
   COMPONENTS Interpreter Development
   REQUIRED)
 
-# Add the executable
+# Remove CMake's compiler identification files from SRC_FILES and RGB_SRC_FILES
+list(FILTER SRC_FILES EXCLUDE REGEX "CompilerIdC")
+list(FILTER RGB_SRC_FILES EXCLUDE REGEX "CompilerIdC")
 
+# Remove example files or files that have their own main function from
+# RGB_SRC_FILES
+list(FILTER RGB_SRC_FILES EXCLUDE REGEX "examples-api-use")
+
+# Add the executable
 include_directories(${PROJECT_SOURCE_DIR}/matrix/lib)
 include_directories(${PROJECT_SOURCE_DIR}/matrix/include)
 
