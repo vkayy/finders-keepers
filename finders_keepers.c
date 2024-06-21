@@ -10,7 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define ROW_DIM 32
+#define MAP_DIM 32
 #define COL_DIM 16
 #define USING_PI true
 #define USING_MIC false
