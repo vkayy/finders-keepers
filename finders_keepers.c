@@ -387,8 +387,8 @@ static void LED_map(Tile map[][COL_DIM],
                     struct LedCanvas *offscreen_canvas,
                     struct RGBLedMatrix *matrix) {
   for (int i = 0; i < MAP_DIM; i++) {
-    for (int j = 1; j < MAP_DIM; j += 2) {
-      switch (map[i][j / 2]) {
+    for (int j = 1; j < MAP_DIM; j++) {
+      switch (map[i][j]) {
       case PATH:
         led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0);
         break;
@@ -639,7 +639,7 @@ int i = 0;
 int j = 0;
 
 int main(int argc, char **argv) {
-  Tile map[MAP_DIM][MAP_DIM / 2];
+  Tile map[MAP_DIM][COL_DIM];
   Player *player;
   Hunter *hunter;
   GameState *game;
