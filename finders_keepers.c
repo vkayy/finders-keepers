@@ -13,7 +13,7 @@
 #define MAP_DIM 32
 #define USING_PI true
 #define USING_MIC false
-#define USING_AUTO false
+#define USING_AUTO true
 #define USING_ALDOUS false
 #define JUNCTION_STOP true
 #define EASE_FACTOR 160
@@ -156,10 +156,10 @@ static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
         printf(" ⟡");
         break;
       case PLAYER:
-        printf("☺ ");
+        printf("\033[31;⬤ ]");
         break;
       case HUNTER:
-        printf("☹ ");
+        printf("\033[31;⬤ ]");
         break;
       default:
         printf(" ?");
@@ -392,7 +392,7 @@ static void LED_map(Tile map[MAP_DIM][MAP_DIM],
         led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0);
         break;
       case WALL:
-    led_canvas_set_pixel(offscreen_canvas, i, j, 255, 0, 0);
+        led_canvas_set_pixel(offscreen_canvas, i, j, 255, 0, 0);
         break;
       case TREASURE:
         led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 0);
