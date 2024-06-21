@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 #define MAP_DIM 32
-#define COL_DIM 16
+#define COL_DIM 32
 #define USING_PI true
 #define USING_MIC false
 #define USING_AUTO false
