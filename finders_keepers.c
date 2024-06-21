@@ -392,7 +392,7 @@ static void LED_map(Tile map[MAP_DIM][MAP_DIM],
         led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0);
         break;
       case WALL:
-    led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 0);
+    led_canvas_set_pixel(offscreen_canvas, i, j, 255, 0, 0);
         break;
       case TREASURE:
         led_canvas_set_pixel(offscreen_canvas, i, j, 255, 255, 0);
