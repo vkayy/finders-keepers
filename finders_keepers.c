@@ -386,8 +386,8 @@ static void LED_map(Tile map[][MAP_DIM / 2],
                     struct LedCanvas *offscreen_canvas,
                     struct RGBLedMatrix *matrix) {
   for (int i = 0; i < MAP_DIM; i++) {
-    for (int j = 0; j < MAP_DIM; j += 2) {
-      switch (map[i][j / 2]) {
+    for (int j = 0; j < MAP_DIM - 1; j += 2) {
+      switch (map[i][j / 2 + 1]) {
       case PATH:
         led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0);
         break;
