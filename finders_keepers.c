@@ -649,8 +649,8 @@ int main(int argc, char **argv) {
 
   if (USING_PI) {
     memset(&options, 0, sizeof(options));
-    options.rows = 64;
-    options.cols = 64;
+    options.rows = 32;
+    options.cols = 32;
     options.chain_length = 1;
 
     matrix = led_matrix_create_from_options(&options, &argc, &argv);
