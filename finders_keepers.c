@@ -17,10 +17,10 @@
 #define USING_ALDOUS false
 #define JUNCTION_STOP true
 #define EASE_FACTOR 160
-#define MIN_DIST 2
-#define MAX_DIST 10
+#define MIN_DIST 4
+#define MAX_DIST 12
 #define INIT_STEPS_LEFT MIN_DIST + 2 * (rand() % ((MAX_DIST - MIN_DIST) / 2))
-#define NUM_SPAWNERS 16
+#define NUM_SPAWNERS 24
 
 typedef enum { PATH, WALL, TREASURE, PLAYER, HUNTER } Tile;
 
