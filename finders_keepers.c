@@ -144,7 +144,7 @@ static Coord bot_right_blank(Tile map[][MAP_DIM / 2]) {
 
 static void display_map(Tile map[][MAP_DIM / 2]) {
   for (int i = 0; i < MAP_DIM; i++) {
-    for (int j = 0; j < MAP_DIM; j++) {
+    for (int j = 0; j < MAP_DIM / 2; j++) {
       switch (map[i][j]) {
       case PATH:
         printf("  ");
