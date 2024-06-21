@@ -156,10 +156,10 @@ static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
         printf(" ⟡");
         break;
       case PLAYER:
-        printf("\033[31mP ");
+        printf("P ");
         break;
       case HUNTER:
-        printf("\033[31mH ");
+        printf("H ");
         break;
       default:
         printf(" ?");
