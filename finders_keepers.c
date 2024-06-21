@@ -408,8 +408,8 @@ static void LED_map(Tile map[][MAP_DIM], struct LedCanvas *offscreen_canvas,
   offscreen_canvas = led_matrix_swap_on_vsync(matrix, offscreen_canvas);
 }
 
-static bool position_valid(int x, int y) {
-  return x > 0 && x < MAP_DIM / 2 - 1 && y > 0 && y < MAP_DIM - 1;
+static bool position_valid(int row, int col) {
+  return row > 0 && row < MAP_DIM / 2 - 1 && col > 0 && col < MAP_DIM - 1;
 }
 
 static bool valid_move(Coord *c, Dir direction) {
@@ -429,7 +429,7 @@ static bool valid_move(Coord *c, Dir direction) {
 }
 
 static void init_map(Tile map[][MAP_DIM]) {
-  for (int i = 0; i < MAP_DIM; ++i) {
+  for (int i = 0; i < MAP_DIM / 2; ++i) {
     for (int j = 0; j < MAP_DIM; ++j) {
       map[i][j] = WALL;
     }
