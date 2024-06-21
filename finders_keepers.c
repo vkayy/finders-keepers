@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 #define MAP_DIM 32
-#define COL_DIM 32
 #define USING_PI true
 #define USING_MIC false
 #define USING_AUTO false
@@ -87,10 +86,10 @@ void check_for_fork() {
   }
 }
 
-static Coord top_left_blank(Tile map[][COL_DIM]) {
+static Coord top_left_blank(Tile map[][MAP_DIM]) {
   Coord ans;
   for (int i = 1; i < MAP_DIM; i++) {
-    for (int j = 1; j < COL_DIM; j++) {
+    for (int j = 1; j < MAP_DIM; j++) {
       if (map[i][j] == PATH) {
         ans.row = i;
         ans.col = j;
@@ -101,10 +100,10 @@ static Coord top_left_blank(Tile map[][COL_DIM]) {
   assert(false);
 }
 
-static Coord top_right_blank(Tile map[][COL_DIM]) {
+static Coord top_right_blank(Tile map[][MAP_DIM]) {
   Coord ans;
   for (int i = 1; i < MAP_DIM; i++) {
-    for (int j = MAP_DIM / 2 - 1; j >= 1; j--) {
+    for (int j = MAP_DIM - 1; j >= 1; j--) {
       if (map[i][j] == PATH) {
         ans.row = i;
         ans.col = j;
@@ -115,10 +114,10 @@ static Coord top_right_blank(Tile map[][COL_DIM]) {
   assert(false);
 }
 
-static Coord bot_left_blank(Tile map[][COL_DIM]) {
+static Coord bot_left_blank(Tile map[][MAP_DIM]) {
   Coord ans;
   for (int i = MAP_DIM - 1; i >= 1; i--) {
-    for (int j = 1; j < COL_DIM; j++) {
+    for (int j = 1; j < MAP_DIM; j++) {
       if (map[i][j] == PATH) {
         ans.row = i;
         ans.col = j;
@@ -129,10 +128,10 @@ static Coord bot_left_blank(Tile map[][COL_DIM]) {
   assert(false);
 }
 
-static Coord bot_right_blank(Tile map[][COL_DIM]) {
+static Coord bot_right_blank(Tile map[][MAP_DIM]) {
   Coord ans;
   for (int i = MAP_DIM - 1; i >= 1; i--) {
-    for (int j = MAP_DIM / 2 - 1; j >= 1; j--) {
+    for (int j = MAP_DIM - 1; j >= 1; j--) {
       if (map[i][j] == PATH) {
         ans.row = i;
         ans.col = j;
@@ -143,9 +142,9 @@ static Coord bot_right_blank(Tile map[][COL_DIM]) {
   assert(false);
 }
 
-static void display_map(Tile map[][COL_DIM]) {
+static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
   for (int i = 0; i < MAP_DIM; i++) {
-    for (int j = 0; j < COL_DIM; j++) {
+    for (int j = 0; j < MAP_DIM; j++) {
       switch (map[i][j]) {
       case PATH:
         printf("  ");
@@ -173,7 +172,7 @@ static void display_map(Tile map[][COL_DIM]) {
 
 static bool check_victory(GameState *game) { return game->pts == 4; }
 
-static void set_treasure(Tile map[][COL_DIM], GameState *game) {
+static void set_treasure(Tile map[][MAP_DIM], GameState *game) {
   Coord tl = top_left_blank(map);
   Coord tr = top_right_blank(map);
   Coord bl = bot_left_blank(map);
@@ -217,22 +216,22 @@ static void set_treasure(Tile map[][COL_DIM], GameState *game) {
   used[r] = true;
 }
 
-static bool can_move(Tile map[][COL_DIM], int row, int col, Dir direction) {
+static bool can_move(Tile map[][MAP_DIM], int x, int y, Dir direction) {
   switch (direction) {
   case LEFT:
-    return !(col <= 0 || map[row][col - 1] == WALL);
+    return !(y <= 0 || map[x][y - 1] == WALL);
   case UP:
-    return !(row <= 0 || map[row - 1][col] == WALL);
+    return !(x <= 0 || map[x - 1][y] == WALL);
   case RIGHT:
-    return !(col >= MAP_DIM / 2 - 1 || map[row][col + 1] == WALL);
+    return !(y >= MAP_DIM - 1 || map[x][y + 1] == WALL);
   case DOWN:
-    return !(row >= MAP_DIM - 1 || map[row + 1][col] == WALL);
+    return !(x >= MAP_DIM - 1 || map[x + 1][y] == WALL);
   default:
     return false;
   }
 }
 
-static void move_player(Tile map[][COL_DIM], Player *player, GameState *game) {
+static void move_player(Tile map[][MAP_DIM], Player *player, GameState *game) {
   if (!can_move(map, player->pos.row, player->pos.col, player->direction)) {
     return;
   }
@@ -276,7 +275,7 @@ static void move_player(Tile map[][COL_DIM], Player *player, GameState *game) {
            can_move(map, player->pos.row, player->pos.col, player->direction));
 }
 
-static void move_hunter(Tile map[][COL_DIM], Hunter *hunter) {
+static void move_hunter(Tile map[][MAP_DIM], Hunter *hunter) {
   if (!can_move(map, hunter->pos.row, hunter->pos.col, hunter->direction)) {
     return;
   }
@@ -319,14 +318,14 @@ static bool check_lost(Player *player, Hunter *hunter) {
           player->pos.col == hunter->pos.col);
 }
 
-int len[MAP_DIM][COL_DIM][MAP_DIM][COL_DIM];
-Dir next[MAP_DIM][COL_DIM][MAP_DIM][COL_DIM];
+int len[MAP_DIM][MAP_DIM][MAP_DIM][MAP_DIM];
+Dir next[MAP_DIM][MAP_DIM][MAP_DIM][MAP_DIM];
 
-static void routing_table(Tile map[][COL_DIM]) {
+static void routing_table(Tile map[][MAP_DIM]) {
   for (int i = 0; i < MAP_DIM; i++) {
-    for (int j = 0; j < COL_DIM; j++) {
+    for (int j = 0; j < MAP_DIM; j++) {
       for (int x = 0; x < MAP_DIM; ++x) {
-        for (int y = 0; y < COL_DIM; ++y) {
+        for (int y = 0; y < MAP_DIM; ++y) {
 
           len[i][j][x][y] = INT_MAX;
           next[i][j][x][y] = UNKNOWN;
@@ -356,17 +355,17 @@ static void routing_table(Tile map[][COL_DIM]) {
   }
 
   for (int p = 0; p < MAP_DIM; ++p) {
-    for (int q = 0; q < COL_DIM; ++q) {
+    for (int q = 0; q < MAP_DIM; ++q) {
       if (map[p][q] == WALL) {
         continue;
       }
       for (int i = 0; i < MAP_DIM; i++) {
-        for (int j = 0; j < COL_DIM; j++) {
+        for (int j = 0; j < MAP_DIM; j++) {
           if (map[i][j] == WALL) {
             continue;
           }
           for (int x = 0; x < MAP_DIM; ++x) {
-            for (int y = 0; y < COL_DIM; ++y) {
+            for (int y = 0; y < MAP_DIM; ++y) {
               if (map[x][y] == WALL) {
                 continue;
               }
@@ -383,11 +382,11 @@ static void routing_table(Tile map[][COL_DIM]) {
   }
 }
 
-static void LED_map(Tile map[][COL_DIM],
+static void LED_map(Tile map[MAP_DIM][MAP_DIM],
                     struct LedCanvas *offscreen_canvas,
                     struct RGBLedMatrix *matrix) {
   for (int i = 0; i < MAP_DIM; i++) {
-    for (int j = 1; j < MAP_DIM; j++) {
+    for (int j = 0; j < MAP_DIM; j++) {
       switch (map[i][j]) {
       case PATH:
         led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0);
@@ -410,15 +409,15 @@ static void LED_map(Tile map[][COL_DIM],
   offscreen_canvas = led_matrix_swap_on_vsync(matrix, offscreen_canvas);
 }
 
-static bool position_valid(int row, int col) {
-  return row > 0 && row < MAP_DIM - 1 && col > 0 && col < COL_DIM - 1;
+static bool position_valid(int x, int y) {
+  return x > 0 && x < MAP_DIM - 1 && y > 0 && y < MAP_DIM - 1;
 }
 
 static bool valid_move(Coord *c, Dir direction) {
   int row = c->row, col = c->col;
   switch (direction) {
   case RIGHT:
-      return col + 2 <= COL_DIM - 2;
+    return col + 2 <= MAP_DIM - 2;
   case UP:
     return row >= 3;
   case LEFT:
@@ -430,15 +429,15 @@ static bool valid_move(Coord *c, Dir direction) {
   }
 }
 
-static void init_map(Tile map[][COL_DIM]) {
+static void init_map(Tile map[][MAP_DIM]) {
   for (int i = 0; i < MAP_DIM; ++i) {
-    for (int j = 0; j < COL_DIM; ++j) {
+    for (int j = 0; j < MAP_DIM; ++j) {
       map[i][j] = WALL;
     }
   }
 }
 
-static void gen_map_aldous_broder(Tile map[][COL_DIM]) {
+static void gen_map_aldous_broder(Tile map[][MAP_DIM]) {
   init_map(map);
 
   srand(time(NULL));
@@ -473,11 +472,11 @@ static void gen_map_aldous_broder(Tile map[][COL_DIM]) {
   }
 }
 
-static void place_spawners(Tile map[][COL_DIM]) {
+static void place_spawners(Tile map[][MAP_DIM]) {
   srand(time(NULL));
   for (int s = 0; s < NUM_SPAWNERS; s++) {
     int row = 2 * (rand() % ((MAP_DIM - 2) / 2)) + 2;
-    int col = 2 * (rand() % ((COL_DIM - 2) / 2)) + 2;
+    int col = 2 * (rand() % ((MAP_DIM - 2) / 2)) + 2;
 
     map[row][col] = PATH;
 
@@ -502,7 +501,7 @@ static void place_spawners(Tile map[][COL_DIM]) {
   }
 }
 
-static void move_builders(Tile map[][COL_DIM]) {
+static void move_builders(Tile map[][MAP_DIM]) {
   while (builder_count) {
     for (int i = 0; i < builder_count;) {
       int old_row = builders[i].coord.row;
@@ -536,13 +535,13 @@ static void move_builders(Tile map[][COL_DIM]) {
   }
 }
 
-static void gen_map_imperfect(Tile map[][COL_DIM]) {
+static void gen_map_imperfect(Tile map[][MAP_DIM]) {
   init_map(map);
   place_spawners(map);
   move_builders(map);
 }
 
-static Player *init_player(Tile map[][COL_DIM]) {
+static Player *init_player(Tile map[][MAP_DIM]) {
   Player *player = malloc(sizeof(Player));
   player->pos = bot_left_blank(map);
   player->direction = UNKNOWN;
@@ -550,7 +549,7 @@ static Player *init_player(Tile map[][COL_DIM]) {
   return player;
 }
 
-static Hunter *init_hunter(Tile map[][COL_DIM]) {
+static Hunter *init_hunter(Tile map[][MAP_DIM]) {
   Hunter *hunter = malloc(sizeof(Hunter));
   hunter->pos = top_right_blank(map);
   hunter->direction = UNKNOWN;
@@ -587,7 +586,7 @@ static void change_player_dir(Player *player) {
   // printf("dir set");
 }
 
-static void auto_change_player_dir(Tile map[][COL_DIM], GameState *game,
+static void auto_change_player_dir(Tile map[][MAP_DIM], GameState *game,
                                    Player *player, Hunter *hunter) {
   Coord treasure_pos = game->treasure_pos;
   Coord current_pos = player->pos;
@@ -626,7 +625,7 @@ static void auto_change_player_dir(Tile map[][COL_DIM], GameState *game,
   // printf("player wants to move in direction %d\n", best_direction);
 }
 
-static GameState *init_game(Tile map[][COL_DIM]) {
+static GameState *init_game(Tile map[][MAP_DIM]) {
   GameState *game = malloc(sizeof(GameState));
   game->pts = 0;
   game->treasure_pos = top_left_blank(map);
@@ -639,7 +638,7 @@ int i = 0;
 int j = 0;
 
 int main(int argc, char **argv) {
-  Tile map[MAP_DIM][COL_DIM];
+  Tile map[MAP_DIM][MAP_DIM];
   Player *player;
   Hunter *hunter;
   GameState *game;
