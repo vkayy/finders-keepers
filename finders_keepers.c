@@ -88,7 +88,7 @@ void check_for_fork() {
 
 static Coord top_left_blank(Tile map[][MAP_DIM]) {
   Coord ans;
-  for (int i = 1; i < MAP_DIM; i++) {
+  for (int i = 1; i < MAP_DIM / 2; i++) {
     for (int j = 1; j < MAP_DIM; j++) {
       if (map[i][j] == PATH) {
         ans.row = i;
@@ -102,7 +102,7 @@ static Coord top_left_blank(Tile map[][MAP_DIM]) {
 
 static Coord top_right_blank(Tile map[][MAP_DIM]) {
   Coord ans;
-  for (int i = 1; i < MAP_DIM; i++) {
+  for (int i = 1; i < MAP_DIM / 2; i++) {
     for (int j = MAP_DIM - 1; j >= 1; j--) {
       if (map[i][j] == PATH) {
         ans.row = i;
@@ -116,7 +116,7 @@ static Coord top_right_blank(Tile map[][MAP_DIM]) {
 
 static Coord bot_left_blank(Tile map[][MAP_DIM]) {
   Coord ans;
-  for (int i = MAP_DIM - 1; i >= 1; i--) {
+  for (int i = MAP_DIM / 2 - 1; i >= 1; i--) {
     for (int j = 1; j < MAP_DIM; j++) {
       if (map[i][j] == PATH) {
         ans.row = i;
@@ -130,7 +130,7 @@ static Coord bot_left_blank(Tile map[][MAP_DIM]) {
 
 static Coord bot_right_blank(Tile map[][MAP_DIM]) {
   Coord ans;
-  for (int i = MAP_DIM - 1; i >= 1; i--) {
+  for (int i = MAP_DIM / 2 - 1; i >= 1; i--) {
     for (int j = MAP_DIM - 1; j >= 1; j--) {
       if (map[i][j] == PATH) {
         ans.row = i;
@@ -143,7 +143,7 @@ static Coord bot_right_blank(Tile map[][MAP_DIM]) {
 }
 
 static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
-  for (int i = 0; i < MAP_DIM; i++) {
+  for (int i = 0; i < MAP_DIM / 2; i++) {
     for (int j = 0; j < MAP_DIM; j++) {
       switch (map[i][j]) {
       case PATH:
@@ -216,16 +216,16 @@ static void set_treasure(Tile map[][MAP_DIM], GameState *game) {
   used[r] = true;
 }
 
-static bool can_move(Tile map[][MAP_DIM], int x, int y, Dir direction) {
+static bool can_move(Tile map[][MAP_DIM], int row, int col, Dir direction) {
   switch (direction) {
   case LEFT:
-    return !(y <= 0 || map[x][y - 1] == WALL);
+    return !(col <= 0 || map[row][col - 1] == WALL);
   case UP:
-    return !(x <= 0 || map[x - 1][y] == WALL);
+    return !(row <= 0 || map[row - 1][col] == WALL);
   case RIGHT:
-    return !(y >= MAP_DIM - 1 || map[x][y + 1] == WALL);
+    return !(col >= MAP_DIM - 1 || map[row][col + 1] == WALL);
   case DOWN:
-    return !(x >= MAP_DIM - 1 || map[x + 1][y] == WALL);
+    return !(row >= MAP_DIM / 2 - 1 || map[row + 1][col] == WALL);
   default:
     return false;
   }
@@ -322,9 +322,9 @@ int len[MAP_DIM][MAP_DIM][MAP_DIM][MAP_DIM];
 Dir next[MAP_DIM][MAP_DIM][MAP_DIM][MAP_DIM];
 
 static void routing_table(Tile map[][MAP_DIM]) {
-  for (int i = 0; i < MAP_DIM; i++) {
+  for (int i = 0; i < MAP_DIM / 2; i++) {
     for (int j = 0; j < MAP_DIM; j++) {
-      for (int x = 0; x < MAP_DIM; ++x) {
+      for (int x = 0; x < MAP_DIM / 2; ++x) {
         for (int y = 0; y < MAP_DIM; ++y) {
 
           len[i][j][x][y] = INT_MAX;
@@ -354,17 +354,17 @@ static void routing_table(Tile map[][MAP_DIM]) {
     }
   }
 
-  for (int p = 0; p < MAP_DIM; ++p) {
+  for (int p = 0; p < MAP_DIM / 2; ++p) {
     for (int q = 0; q < MAP_DIM; ++q) {
       if (map[p][q] == WALL) {
         continue;
       }
-      for (int i = 0; i < MAP_DIM; i++) {
+      for (int i = 0; i < MAP_DIM / 2; i++) {
         for (int j = 0; j < MAP_DIM; j++) {
           if (map[i][j] == WALL) {
             continue;
           }
-          for (int x = 0; x < MAP_DIM; ++x) {
+          for (int x = 0; x < MAP_DIM / 2; ++x) {
             for (int y = 0; y < MAP_DIM; ++y) {
               if (map[x][y] == WALL) {
                 continue;
@@ -382,12 +382,11 @@ static void routing_table(Tile map[][MAP_DIM]) {
   }
 }
 
-static void LED_map(Tile map[MAP_DIM][MAP_DIM],
-                    struct LedCanvas *offscreen_canvas,
+static void LED_map(Tile map[][MAP_DIM], struct LedCanvas *offscreen_canvas,
                     struct RGBLedMatrix *matrix) {
-  for (int i = 0; i < MAP_DIM; i++) {
+  for (int i = 0; i < MAP_DIM; i += 2) {
     for (int j = 0; j < MAP_DIM; j++) {
-      switch (map[i][j]) {
+      switch (map[i / 2][j]) {
       case PATH:
         led_canvas_set_pixel(offscreen_canvas, i, j, 0, 0, 0);
         break;
@@ -410,7 +409,7 @@ static void LED_map(Tile map[MAP_DIM][MAP_DIM],
 }
 
 static bool position_valid(int x, int y) {
-  return x > 0 && x < MAP_DIM - 1 && y > 0 && y < MAP_DIM - 1;
+  return x > 0 && x < MAP_DIM / 2 - 1 && y > 0 && y < MAP_DIM - 1;
 }
 
 static bool valid_move(Coord *c, Dir direction) {
@@ -423,7 +422,7 @@ static bool valid_move(Coord *c, Dir direction) {
   case LEFT:
     return col >= 3;
   case DOWN:
-    return row + 2 <= MAP_DIM - 2;
+    return row + 2 <= MAP_DIM / 2 - 2;
   default:
     return false;
   }
@@ -475,7 +474,7 @@ static void gen_map_aldous_broder(Tile map[][MAP_DIM]) {
 static void place_spawners(Tile map[][MAP_DIM]) {
   srand(time(NULL));
   for (int s = 0; s < NUM_SPAWNERS; s++) {
-    int row = 2 * (rand() % ((MAP_DIM - 2) / 2)) + 2;
+    int row = 2 * (rand() % ((MAP_DIM / 2 - 2) / 2)) + 2;
     int col = 2 * (rand() % ((MAP_DIM - 2) / 2)) + 2;
 
     map[row][col] = PATH;
@@ -638,7 +637,7 @@ int i = 0;
 int j = 0;
 
 int main(int argc, char **argv) {
-  Tile map[MAP_DIM][MAP_DIM];
+  Tile map[MAP_DIM / 2][MAP_DIM];
   Player *player;
   Hunter *hunter;
   GameState *game;
@@ -649,8 +648,8 @@ int main(int argc, char **argv) {
 
   if (USING_PI) {
     memset(&options, 0, sizeof(options));
-    options.rows = 64;
-    options.cols = 64;
+    options.rows = 32;
+    options.cols = 32;
     options.chain_length = 1;
 
     matrix = led_matrix_create_from_options(&options, &argc, &argv);
