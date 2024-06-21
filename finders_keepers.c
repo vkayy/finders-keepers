@@ -142,7 +142,7 @@ static Coord bot_right_blank(Tile map[][MAP_DIM]) {
   assert(false);
 }
 
-static void display_map(Tile map[MAP_DIM][MAP_DIM]) {
+static void display_map(Tile map[][MAP_DIM]) {
   for (int i = 0; i < MAP_DIM / 2; i++) {
     for (int j = 0; j < MAP_DIM; j++) {
       switch (map[i][j]) {
